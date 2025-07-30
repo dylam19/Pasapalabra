@@ -77,7 +77,7 @@ const EndMessage = () => {
           >
             « Anterior
           </button>
-          <span>Página {page + 1} de {totalPages}</span>
+          <span>{page + 1} / {totalPages}</span>
           <button
             onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
             disabled={page === totalPages - 1}
