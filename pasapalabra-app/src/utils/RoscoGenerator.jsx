@@ -12,10 +12,17 @@ export function generarRoscoDesdeJSON() {
     // Escogemos índice aleatorio
     const idx = Math.floor(Math.random() * entradas.length);
     const { palabra, definicion } = entradas[idx];
+
+    // Detectamos si empieza o solo contiene
+    const lowerPal = palabra.toLowerCase();
+    const lowerLet = letra.toLowerCase();
+    const modo = lowerPal.startsWith(lowerLet) ? 'inicia' : 'contiene';
+
     return {
       letra,
-      pregunta: definicion,
-      respuesta: palabra,
+      palabra,
+      definicion,
+      modo,           // <-- nuevo campo
       estado: 'pendiente'
     };
   });

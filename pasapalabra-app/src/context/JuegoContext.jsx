@@ -8,20 +8,32 @@ export const useJuego = () => useContext(JuegoContext);
 export const JuegoProvider = ({ children }) => {
   const TIEMPO_DEFAULT = 180;
 
-  // Estado del rosco
-  const [preguntas, setPreguntas]         = useState([]);
-  const [indiceActual, setIndiceActual]   = useState(0);
+  // — Helper: genera un rosco nuevo a partir de diccionario.json —
+  const generarRosco = () =>
+    Object.entries(diccionario).map(([letra, entradas]) => {
+      const idx = Math.floor(Math.random() * entradas.length);
+      const { palabra, definicion } = entradas[idx];
+      const lowerPal = palabra.toLowerCase();
+      const modo = lowerPal.startsWith(letra.toLowerCase())
+        ? 'inicia'
+        : 'contiene';
+      return { letra, palabra, definicion, modo, estado: 'pendiente' };
+    });
 
-  // Temporizador
-  const [tiempoInicial, setTiempoInicial] = useState(TIEMPO_DEFAULT);
+  // — Estado del rosco (pre-generado al montar el Provider) —
+  const [preguntas, setPreguntas]       = useState(() => generarRosco());
+  const [indiceActual, setIndiceActual] = useState(0);
+
+  // — Temporizador —
+  const [tiempoInicial, setTiempoInicial]   = useState(TIEMPO_DEFAULT);
   const [tiempoRestante, setTiempoRestante] = useState(TIEMPO_DEFAULT);
 
-  // Flags de juego
+  // — Flags de juego —
   const [started, setStarted] = useState(false);
   const [paused, setPaused]   = useState(false);
   const [gameOver, setGameOver] = useState(false);
 
-  // Resetea el contador si cambias tiempoInicial antes de empezar
+  // Al cambiar tiempoInicial antes de empezar, resetea el contador
   useEffect(() => {
     if (!started) setTiempoRestante(tiempoInicial);
   }, [tiempoInicial, started]);
@@ -42,60 +54,71 @@ export const JuegoProvider = ({ children }) => {
     return () => clearInterval(timer);
   }, [started, paused, gameOver]);
 
-  // Helper: genera un rosco nuevo a partir de tu diccionario.json
-  const generarRosco = () => {
-    return Object.entries(diccionario).map(([letra, entradas]) => {
-      const idx = Math.floor(Math.random() * entradas.length);
-      const { palabra, definicion } = entradas[idx];
-      return { letra, palabra, definicion, estado: 'pendiente' };
-    });
-  };
-
-  // Inicia o reinicia el juego con un rosco nuevo
+  // Arranca o reinicia partida con un rosco NUEVO
   const startGame = () => {
     const rosco = generarRosco();
     setPreguntas(rosco);
     setIndiceActual(0);
     setTiempoRestante(tiempoInicial);
+
     setStarted(true);
     setPaused(false);
     setGameOver(false);
   };
 
-  // Reanudar tras pausa (mal o pasapalabra)
-  const resumeGame = () => {
-    setPaused(false);
-    const next = preguntas.findIndex((p) => p.estado === 'pendiente');
-    if (next !== -1) setIndiceActual(next);
+  // Busca el siguiente pendiente en modo circular
+  const buscarSiguiente = (desde, arr) => {
+    for (let i = 1; i <= arr.length; i++) {
+      const ni = (desde + i) % arr.length;
+      if (arr[ni].estado === 'pendiente') return ni;
+    }
+    return -1;
   };
 
-  // Maneja pausa/vuelta/fin de juego
+  // Quita la pausa y avanza o reinicia vuelta si no hay pendientes
+  const resumeGame = () => {
+    const quedan = preguntas.some((p) => p.estado === 'pendiente');
+    const huboP = preguntas.some((p) => p.estado === 'pasado');
+    if (!quedan && huboP) {
+      // reinicia pasados
+      const rein = preguntas.map((p) =>
+        p.estado === 'pasado' ? { ...p, estado: 'pendiente' } : p
+      );
+      setPreguntas(rein);
+      const first = buscarSiguiente(-1, rein);
+      if (first !== -1) setIndiceActual(first);
+    } else {
+      const next = buscarSiguiente(indiceActual, preguntas);
+      if (next !== -1) setIndiceActual(next);
+    }
+    setPaused(false);
+  };
+
+  // Maneja ✔️ / ❌ / ⏭️
   const manejarRespuesta = (nuevoEstado) => {
     if (!started || gameOver) return;
-
     const updated = preguntas.map((p, i) =>
       i === indiceActual ? { ...p, estado: nuevoEstado } : p
     );
     setPreguntas(updated);
 
-    // Pausar si fue incorrecto o pasapalabra
     if (nuevoEstado === 'incorrecto' || nuevoEstado === 'pasado') {
       setPaused(true);
       return;
     }
 
-    // Avanzar o, si acabó la vuelta, reiniciar los pasados
-    const quedan = updated.some((p) => p.estado === 'pendiente');
-    if (quedan) {
-      setIndiceActual(updated.findIndex((p) => p.estado === 'pendiente'));
+    const next = buscarSiguiente(indiceActual, updated);
+    if (next !== -1) {
+      setIndiceActual(next);
     } else {
-      const huboPas = updated.some((p) => p.estado === 'pasado');
-      if (huboPas) {
-        const reinicio = updated.map((p) =>
+      const huboP = updated.some((p) => p.estado === 'pasado');
+      if (huboP) {
+        const rein = updated.map((p) =>
           p.estado === 'pasado' ? { ...p, estado: 'pendiente' } : p
         );
-        setPreguntas(reinicio);
-        setIndiceActual(reinicio.findIndex((p) => p.estado === 'pendiente'));
+        setPreguntas(rein);
+        const first = buscarSiguiente(-1, rein);
+        if (first !== -1) setIndiceActual(first);
       } else {
         setGameOver(true);
       }

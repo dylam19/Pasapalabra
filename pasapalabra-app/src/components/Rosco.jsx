@@ -6,13 +6,17 @@ const Rosco = () => {
   const { preguntas, indiceActual, started } = useJuego();
   const total = preguntas.length;
 
-  const size = 360;
+  const size = 420;            // antes 360
   const center = size / 2;
-  const radius = 150;
-  const circleR = 16;
-
+  const radius = 180;          // antes 150
+  const circleR = 20;          // antes 16
   return (
-    <div className="mx-auto w-full max-w-[350px] aspect-square">
+    <div className="        mx-auto w-full
+        max-w-[90vw]     /* en móviles ocupa 90% del ancho */
+        sm:max-w-sm      /* ≥640px → 24rem (384px) */
+        md:max-w-md      /* ≥768px → 28rem (448px) */
+        lg:max-w-lg      /* ≥1024px → 32rem (512px) */
+        aspect-square">
       <svg viewBox={`0 0 ${size} ${size}`} className="w-full h-full">
         <defs>
           {/* Degradado lineal a 45 grados */}
@@ -71,6 +75,17 @@ const Rosco = () => {
             <stop offset="0%" stopColor="#DA0924" />   {/* color claro */}
             <stop offset="100%" stopColor="#B30011" /> {/* color oscuro */}
           </linearGradient>
+
+          <linearGradient
+            id="roscoGradientPurple"
+            x1="0%"
+            y1="0%"
+            x2="100%"
+            y2="100%"
+          >
+            <stop offset="0%" stopColor="#8B5CF6" />   {/* color claro */}
+            <stop offset="100%" stopColor="#7b54d6ff" /> {/* color oscuro */}
+          </linearGradient>
         </defs>
 
         {preguntas.map((p, i) => {
@@ -117,14 +132,13 @@ const Rosco = () => {
         })}
 
         {/* Centro con target */}
-        <circle cx={center} cy={center} r={26} fill="#8B5CF6" />
+        <circle cx={center} cy={center} r={24} stroke="#686674B0" strokeWidth={2} fill="url(#roscoGradientPurple)" />
         <text
           x={center}
           y={center + 6}
           textAnchor="middle"
           fontSize="22"
         >
-          🎯
         </text>
       </svg>
     </div>

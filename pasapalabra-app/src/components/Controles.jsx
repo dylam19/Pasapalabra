@@ -9,7 +9,7 @@ const Controles = () => {
     : 'hover:brightness-110';
 
   return (
-    <div className="flex justify-center gap-4 mt-6">
+    <div className="flex justify-center gap-4 mt-6 select-none">
       <button
         disabled={gameOver}
         onClick={() => manejarRespuesta('correcto')}

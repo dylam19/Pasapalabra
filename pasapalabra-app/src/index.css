@@ -17,6 +17,14 @@
   color-scheme: light dark;
 }
 
+
+
+/* Personaliza el color de fondo y texto cuando algo sí sea seleccionable */
+::selection {
+  background-color: #EB0B92;  /* el rosa que estás usando */
+  color: #ffffff;             /* texto blanco sobre ese fondo */
+}
+
 /* Aseguramos que html, body y #root ocupen todo el alto */
 html,
 body,

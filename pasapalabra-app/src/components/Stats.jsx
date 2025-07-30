@@ -90,7 +90,7 @@ const Stats = () => {
 
   return (
     <div
-      className="mb-6 w-full px-4"
+      className="md:mb-2 w-full px-4"
       style={{
         display: 'grid',
         gridTemplateColumns: 'min-content 1fr min-content',
@@ -179,9 +179,15 @@ const Stats = () => {
         {!started && (
           <button
             onClick={() => setEditing((e) => !e)}
-            className="p-2 rounded-full shadow-md text-xl"
-          >
-            {editing ? '✔️' : '⚙️'}
+            className="p-2 rounded-full shadow-md text-xl">
+          {editing 
+            ? <span className="material-symbols-outlined text-[#fff]">
+                check_circle
+              </span>
+            : <span className="material-symbols-outlined text-[#fff]">
+                settings
+              </span>
+          }
           </button>
         )}
       </div>

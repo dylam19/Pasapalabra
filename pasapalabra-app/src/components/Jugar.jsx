@@ -18,7 +18,7 @@ const Jugar = () => {
   // 1) Antes de arrancar
   if (!started) {
     return (
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-6 select-none">
         <button
           onClick={startGame}
           className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md transition"
@@ -36,12 +36,12 @@ const Jugar = () => {
         {/* Mantenemos la definición visible */}
         <Pregunta />
 
-        <div className="flex justify-center">
+        <div className="flex justify-center select-none">
           <button
             onClick={resumeGame}
             className="bg-green-500 hover:bg-green-600 text-white px-6 py-3 rounded-lg shadow-md transition"
           >
-            ▶️ Continuar
+            Continuar
           </button>
         </div>
       </div>
@@ -64,10 +64,10 @@ const Jugar = () => {
       <div className="mt-6">
         <EndMessage />
       </div>
-      <div className="flex justify-center mt-6">
+      <div className="flex justify-center mt-6 select-none">
         <button
           onClick={startGame}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-3 rounded-lg shadow-md transition"
+          className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-1 rounded-lg shadow-md transition "
         >
           Nuevo Rosco
         </button>
