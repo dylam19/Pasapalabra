@@ -11,6 +11,7 @@ import MultiplayerEndScreen from './MultiplayerEndScreen';
 const VistaDelJugador = () => {
   const {
     estadoSala,
+    estadoJuego,
     cargando,
     preguntasPropias,
     preguntasDelOtro,
