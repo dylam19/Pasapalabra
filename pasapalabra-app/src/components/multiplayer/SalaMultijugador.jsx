@@ -6,15 +6,7 @@ import Rosco from '../Rosco';
 import Pregunta from '../Pregunta';
 import Controles from '../Controles';
 import Stats from '../Stats';
-
 import MultiplayerEndScreen from './MultiplayerEndScreen';
-
-const juegoFinalizado = () => {
-  return (
-    !estadoSala?.preguntas_p1?.some(p => p.estado === 'pendiente' || p.estado === 'pasado') &&
-    !estadoSala?.preguntas_p2?.some(p => p.estado === 'pendiente' || p.estado === 'pasado')
-  );
-};
 
 const VistaDelJugador = () => {
   const {
@@ -31,18 +23,19 @@ const VistaDelJugador = () => {
   } = useMultiplayer();
 
   const juegoFinalizado = () => {
+    if (!estadoSala || !estadoSala.preguntas_p1 || !estadoSala.preguntas_p2) return false;
     return (
-      !estadoSala?.preguntas_p1?.some((p) => p.estado === 'pendiente' || p.estado === 'pasado') &&
-      !estadoSala?.preguntas_p2?.some((p) => p.estado === 'pendiente' || p.estado === 'pasado')
+      !estadoSala.preguntas_p1.some((p) => p.estado === 'pendiente' || p.estado === 'pasado') &&
+      !estadoSala.preguntas_p2.some((p) => p.estado === 'pendiente' || p.estado === 'pasado')
     );
   };
 
-  if (juegoFinalizado()) {
-    return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
-  }
-
   if (cargando || !estadoSala) {
     return <div className="text-white text-center mt-10">Cargando sala...</div>;
+  }
+
+  if (juegoFinalizado()) {
+    return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
   }
 
   if (!preguntaActual) {
@@ -66,13 +59,11 @@ const VistaDelJugador = () => {
       </header>
 
       <div className="flex flex-col md:flex-row gap-6">
-        {/* ROSCO + STATS */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
           <Rosco preguntas={esMiTurno ? preguntasPropias : preguntasDelOtro} />
           <Stats puntaje={puntajePropio} editable={false} />
         </div>
 
-        {/* PREGUNTA + CONTROLES (solo si sos controlador) */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
           <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
           {soyElControlador && (
