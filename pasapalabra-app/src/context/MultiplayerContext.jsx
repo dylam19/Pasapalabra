@@ -4,7 +4,8 @@ import {
   crearSala,
   escucharSala,
   actualizarSala,
-  obtenerSala
+  obtenerSala,
+  setJugadorPresente
 } from '../services/firebaseGame';
 
 const MultiplayerContext = createContext();
