@@ -20,7 +20,7 @@ const Stats = () => {
   const strokeWidth = 4;
 
   const minTime = 30;
-  const maxTime = 300;
+  const maxTime = 500;
 
   const fraction = started ? tiempoRestante / tiempoInicial : 1;
   const offset = (1 - fraction) * 2 * Math.PI * radius;
