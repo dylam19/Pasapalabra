@@ -3,8 +3,11 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 const MultiplayerEndScreen = ({ puntajes }) => {
-  const navigate = useNavigate();
-  const { p1, p2 } = puntajes;
+const navigate = useNavigate();
+  
+const { p1 = 0, p2 = 0 } = puntajes || {};
+
+
 
   const ganador =
     p1 > p2 ? 'Jugador 1' :
