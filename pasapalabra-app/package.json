@@ -11,6 +11,7 @@
     "twinit": "tailwindcss init -p"
   },
   "dependencies": {
+    "@fseehawer/react-circular-slider": "^3.2.7",
     "@tailwindcss/vite": "^4.1.11",
     "cors": "^2.8.5",
     "express": "^5.1.0",

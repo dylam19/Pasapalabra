@@ -50,6 +50,8 @@ const Stats = () => {
     }
   }, [started]);
 
+  const lastAngleRef = useRef(null);
+
   // Evento global para arrastrar el handle
   useEffect(() => {
     const onMove = (e) => {
@@ -61,13 +63,19 @@ const Stats = () => {
       const dy = e.clientY - cy;
       let ang = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       if (ang < 0) ang += 360;
+
+      // Prevención de saltos al pasar de 360° a 0°
+      if (lastAngleRef.current !== null) {
+        const diff = Math.abs(ang - lastAngleRef.current);
+        if (diff > 180) return; // salto brusco = ignorar
+      }
+      lastAngleRef.current = ang;
+
       const frac = ang / 360;
-      
-      // Cálculo bruto de tiempo
       let newTime = Math.round(minTime + frac * (maxTime - minTime));
 
-      // ── SNAPPING: tope firme en los extremos ──
-      const snapRange = 5; // tolerancia de 5 segundos
+      // Snapping
+      const snapRange = 5;
       if (newTime >= maxTime - snapRange) newTime = maxTime;
       if (newTime <= minTime + snapRange) newTime = minTime;
 
@@ -76,6 +84,7 @@ const Stats = () => {
 
     const onUp = () => {
       if (dragging) setDragging(false);
+      lastAngleRef.current = null;
     };
 
     window.addEventListener('pointermove', onMove);
@@ -151,25 +160,39 @@ const Stats = () => {
           {/* Slider radial (modo edición) */}
           {editing && !started && (
             <>
-              <circle
-                cx={center} cy={center} r={outerRadius}
-                fill="none" stroke="#555" strokeWidth={outerStroke}
-              />
-              <circle
-                cx={center} cy={center} r={outerRadius}
-                fill="none"
-                stroke="url(#sliderGradient)" strokeWidth={outerStroke}
-                strokeDasharray={outerCirc}
-                strokeDashoffset={outerCirc * (1 - sliderFrac)}
-                transform={`rotate(-90 ${center} ${center})`}
-              />
-              <circle
-                cx={handleX} cy={handleY} r={6}
-                fill="#fff" stroke="#D13B83" strokeWidth="2"
-                style={{ cursor: 'pointer' }}
-                onPointerDown={() => setDragging(true)}
-              />
-            </>
+                {/* Track exterior gris */}
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={outerRadius}
+                  fill="none"
+                  stroke="#555"
+                  strokeWidth={outerStroke}
+                />
+                {/* Progreso exterior de slider */}
+                <circle
+                  cx={center}
+                  cy={center}
+                  r={outerRadius}
+                  fill="none"
+                  stroke="url(#sliderGradient)"
+                  strokeWidth={outerStroke}
+                  strokeDasharray={outerCirc}
+                  strokeDashoffset={outerCirc * (1 - sliderFrac)}
+                  transform={`rotate(-90 ${center} ${center})`}
+                />
+                {/* Handle (drag knob) */}
+                <circle
+                  cx={handleX}
+                  cy={handleY}
+                  r={6}
+                  fill="#fff"
+                  stroke="#D13B83"
+                  strokeWidth="2"
+                  style={{ cursor: 'pointer', touchAction: 'none' }}
+                  onPointerDown={() => setDragging(true)}
+                />
+              </>
           )}
         </svg>
       </div>
