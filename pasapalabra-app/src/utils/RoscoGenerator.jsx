@@ -1,5 +1,5 @@
 // src/utils/RoscoGenerator.jsx
-import diccionario from '../data/diccionario.json';
+import diccionario from '../data/diccionario_final_completo.json';
 
 /**
  * Genera una pregunta por cada letra en el JSON,

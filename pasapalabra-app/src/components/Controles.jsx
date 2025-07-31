@@ -12,11 +12,19 @@ const reproducirSonido = (tipo) => {
 };
 
 const Controles = ({ onResponder, disabled = false }) => {
-  const { manejarRespuesta, gameOver } = useJuego();
+  let gameOver = false;
+  let manejarRespuesta = () => {};
+
+  try {
+    const juego = useJuego?.();
+    if (juego) {
+      gameOver = juego.gameOver;
+      manejarRespuesta = juego.manejarRespuesta;
+    }
+  } catch {}
 
   const handle = (tipo) => {
     reproducirSonido(tipo);
-
     if (onResponder) {
       onResponder(tipo); // multijugador
     } else {

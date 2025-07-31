@@ -2,7 +2,17 @@ import React from 'react';
 import { useJuego } from '../context/JuegoContext';
 
 const Timer = () => {
-  const { tiempoRestante, gameOver } = useJuego();
+  let tiempoRestante = 0;
+  let gameOver = false;
+
+  try {
+    const juego = useJuego?.();
+    if (juego) {
+      tiempoRestante = juego.tiempoRestante ?? 0;
+      gameOver = juego.gameOver ?? false;
+    }
+  } catch {}
+
   const minutes = String(Math.floor(tiempoRestante / 60)).padStart(2, '0');
   const seconds = String(tiempoRestante % 60).padStart(2, '0');
 

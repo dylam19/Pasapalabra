@@ -1,4 +1,3 @@
-// src/components/Stats.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import { useJuego } from '../context/JuegoContext';
 import TiempoSlider from './TiempoSlider';
@@ -9,13 +8,18 @@ const Stats = ({
   puntaje: puntajeExt,
   editable = true
 }) => {
+  let juego = {};
+  try {
+    juego = useJuego?.() || {};
+  } catch {}
+
   const {
     tiempoRestante,
     tiempoInicial,
     setTiempoInicial,
-    preguntas,
+    preguntas = [],
     started,
-  } = useJuego();
+  } = juego;
 
   const correctas =
     puntajeExt ?? preguntas.filter((p) => p.estado === 'correcto').length;
@@ -26,10 +30,10 @@ const Stats = ({
   const strokeWidth = 4;
 
   const minTime = 60;
-  const maxTime = 400;
+  const maxTime = 450;
 
-  const tiempoBase = tiempoInicialExt ?? tiempoInicial;
-  const tiempoActual = tiempoExt ?? tiempoRestante;
+  const tiempoBase = tiempoInicialExt ?? tiempoInicial ?? 1;
+  const tiempoActual = tiempoExt ?? tiempoRestante ?? 1;
 
   const fraction = started ? tiempoActual / tiempoBase : 1;
   const offset = (1 - fraction) * 2 * Math.PI * radius;
@@ -52,7 +56,6 @@ const Stats = ({
         alignItems: 'center',
       }}
     >
-      {/* TIMER */}
       <div className="relative w-[90px] h-[90px]" ref={wrapperRef}>
         <svg width={size} height={size}>
           <defs>
@@ -94,7 +97,6 @@ const Stats = ({
           </text>
         </svg>
 
-        {/* SLIDER */}
         {editable && !started && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
             <TiempoSlider
@@ -107,7 +109,6 @@ const Stats = ({
         )}
       </div>
 
-      {/* BOTÓN DE AJUSTE */}
       <div style={{ justifySelf: 'center' }}>
         {editable && !started && (
           <button
@@ -123,7 +124,6 @@ const Stats = ({
         )}
       </div>
 
-      {/* CONTADOR DE ACIERTOS */}
       <div className="w-[80px] h-[80px]">
         <svg width={size} height={size}>
           <defs>
@@ -136,14 +136,7 @@ const Stats = ({
             </filter>
           </defs>
           <circle cx={center} cy={center} r={radius} fill="url(#counterGradient)" />
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke="#534C6FB0"
-            strokeWidth={strokeWidth}
-          />
+          <circle cx={center} cy={center} r={radius} fill="none" stroke="#534C6FB0" strokeWidth={strokeWidth} />
           <text
             x={center}
             y={center}
