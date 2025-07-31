@@ -16,7 +16,7 @@ const UnirseASala = () => {
       return;
     }
 
-    navigate(`/sala/${roomId}/jugador2`);
+    navigate(`/sala/${roomId}/p2`);
   };
 
   return (
