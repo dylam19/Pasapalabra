@@ -1,38 +1,30 @@
 // src/components/multiplayer/MultiplayerEndScreen.jsx
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 
 const MultiplayerEndScreen = ({ puntajes }) => {
-const navigate = useNavigate();
-  
-const { p1 = 0, p2 = 0 } = puntajes || {};
+  if (!puntajes) {
+    return (
+      <div className="text-white text-center mt-10">
+        Calculando resultados...
+      </div>
+    );
+  }
 
-
-
-  const ganador =
-    p1 > p2 ? 'Jugador 1' :
-    p2 > p1 ? 'Jugador 2' :
-    'Empate';
+  const { p1 = 0, p2 = 0 } = puntajes;
+  const resultado =
+    p1 > p2 ? '¡Ganó el Jugador 1!' :
+    p2 > p1 ? '¡Ganó el Jugador 2!' :
+    '¡Empate!';
 
   return (
-    <div className="text-white text-center p-6 space-y-6">
-      <h2 className="text-4xl font-bold">🎉 ¡Fin del juego! 🎉</h2>
-      <h3 className="text-2xl">
-        🏆 Resultado: <span className="text-pink-400 font-bold">{ganador}</span>
-      </h3>
-
-      <div className="text-lg space-y-1">
-        <p>Jugador 1: {p1} aciertos</p>
-        <p>Jugador 2: {p2} aciertos</p>
-      </div>
-
-      <div className="pt-4">
-        <button
-          onClick={() => navigate('/')}
-          className="bg-blue-600 px-6 py-2 rounded shadow hover:brightness-110"
-        >
-          Volver al inicio
-        </button>
+    <div className="flex flex-col items-center justify-center h-full text-white p-6 select-none">
+      <h2 className="text-3xl font-bold mb-4">🏁 ¡Juego Finalizado!</h2>
+      <div className="bg-darkBlue rounded-xl p-6 shadow-md w-full max-w-md text-center">
+        <p className="text-xl mb-4">{resultado}</p>
+        <div className="flex justify-around text-lg font-semibold">
+          <div>Jugador 1: {p1} pts</div>
+          <div>Jugador 2: {p2} pts</div>
+        </div>
       </div>
     </div>
   );
