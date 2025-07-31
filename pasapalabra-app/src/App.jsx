@@ -3,9 +3,13 @@
   import Rosco from './components/Rosco';
   import Stats from './components/Stats';
   import Jugar from './components/Jugar';
+  import BackgroundMusic from './components/BackgroundMusic';
 
   const App = () => (
     <JuegoProvider>
+
+          {/* arranca el audio manager */}
+    <BackgroundMusic />
         <div className="min-h-screen text-white p-4 md:p-4
                   bg-gradient-to-b
                   from-[#EB0B92]

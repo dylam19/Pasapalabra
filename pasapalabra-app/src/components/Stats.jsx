@@ -110,11 +110,11 @@ const Stats = () => {
             className="p-2 rounded-full shadow-md text-xl"
           >
             {editing ? (
-              <span className="material-symbols-outlined text-[#fff]">
+              <span className="material-symbols-outlined text-[#D7D5D9]">
                 check_circle
               </span>
             ) : (
-              <span className="material-symbols-outlined text-[#fff]">
+              <span className="material-symbols-outlined text-[#D7D5D9]">
                 settings
               </span>
             )}
