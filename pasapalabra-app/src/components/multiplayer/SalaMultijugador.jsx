@@ -16,7 +16,6 @@ const juegoFinalizado = () => {
   );
 };
 
-
 const VistaDelJugador = () => {
   const {
     estadoSala,
@@ -31,9 +30,16 @@ const VistaDelJugador = () => {
     puntajePropio,
   } = useMultiplayer();
 
+  const juegoFinalizado = () => {
+    return (
+      !estadoSala?.preguntas_p1?.some((p) => p.estado === 'pendiente' || p.estado === 'pasado') &&
+      !estadoSala?.preguntas_p2?.some((p) => p.estado === 'pendiente' || p.estado === 'pasado')
+    );
+  };
+
   if (juegoFinalizado()) {
-  return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
-}
+    return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
+  }
 
   if (cargando || !estadoSala) {
     return <div className="text-white text-center mt-10">Cargando sala...</div>;
