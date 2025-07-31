@@ -1,0 +1,96 @@
+// src/components/multiplayer/SalaMultijugador.jsx
+import React from 'react';
+import { useParams } from 'react-router-dom';
+import { MultiplayerProvider, useMultiplayer } from '../../context/MultiplayerConext';
+import Rosco from '../Rosco';
+import Pregunta from '../Pregunta';
+import Controles from '../Controles';
+import Stats from '../Stats';
+
+import MultiplayerEndScreen from './MultiplayerEndScreen';
+
+const juegoFinalizado = () => {
+  return (
+    !estadoSala?.preguntas_p1?.some(p => p.estado === 'pendiente' || p.estado === 'pasado') &&
+    !estadoSala?.preguntas_p2?.some(p => p.estado === 'pendiente' || p.estado === 'pasado')
+  );
+};
+
+
+const VistaDelJugador = () => {
+  const {
+    estadoSala,
+    cargando,
+    preguntasPropias,
+    preguntasDelOtro,
+    preguntaActual,
+    esMiTurno,
+    soyElControlador,
+    responder,
+    pasarTurno,
+    puntajePropio,
+  } = useMultiplayer();
+
+  if (juegoFinalizado()) {
+  return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
+}
+
+  if (cargando || !estadoSala) {
+    return <div className="text-white text-center mt-10">Cargando sala...</div>;
+  }
+
+  if (!preguntaActual) {
+    return (
+      <div className="text-white text-center mt-10">
+        <h2 className="text-3xl font-bold mb-2">Juego finalizado 🎉</h2>
+        <p>Puntajes:</p>
+        <p>Jugador 1: {estadoSala.puntajes.p1}</p>
+        <p>Jugador 2: {estadoSala.puntajes.p2}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
+      <header className="text-center mb-4">
+        <h2 className="text-3xl font-bold">Sala: Multijugador</h2>
+        <p className="text-lg">
+          {esMiTurno ? 'Es tu turno para responder' : 'Te toca controlar al otro jugador'}
+        </p>
+      </header>
+
+      <div className="flex flex-col md:flex-row gap-6">
+        {/* ROSCO + STATS */}
+        <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
+          <Rosco preguntas={esMiTurno ? preguntasPropias : preguntasDelOtro} />
+          <Stats puntaje={puntajePropio} editable={false} />
+        </div>
+
+        {/* PREGUNTA + CONTROLES (solo si sos controlador) */}
+        <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
+          <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
+          {soyElControlador && (
+            <Controles
+              onResponder={(tipo) => {
+                responder(tipo);
+                if (tipo !== 'correcto') pasarTurno();
+              }}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SalaMultijugador = () => {
+  const { roomId, jugadorId } = useParams();
+
+  return (
+    <MultiplayerProvider roomId={roomId} jugadorId={jugadorId}>
+      <VistaDelJugador />
+    </MultiplayerProvider>
+  );
+};
+
+export default SalaMultijugador;

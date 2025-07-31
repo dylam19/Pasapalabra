@@ -1,9 +1,9 @@
   import React from 'react';
-  import { JuegoProvider } from './context/JuegoContext';
-  import Rosco from './components/Rosco';
-  import Stats from './components/Stats';
-  import Jugar from './components/Jugar';
-  import BackgroundMusic from './components/BackgroundMusic';
+  import { JuegoProvider } from '../context/JuegoContext';
+  import Rosco from '../components/Rosco';
+  import Stats from '../components/Stats';
+  import Jugar from '../components/Jugar';
+  import BackgroundMusic from '../components/BackgroundMusic';
 
   const App = () => (
     <JuegoProvider>

@@ -1,20 +1,18 @@
-// src/components/EndMessage.jsx
-import React, { useState } from 'react';
 import { useJuego } from '../context/JuegoContext';
+import React, { useState } from 'react';
 
-const EndMessage = () => {
-  const { preguntas, startGame } = useJuego();
-  // Solo los pendientes
+
+const EndMessage = ({ preguntas: preguntasProp }) => {
+  const { preguntas: preguntasJuego, startGame } = useJuego();
+  const preguntas = preguntasProp || preguntasJuego;
+
   const pendientes = preguntas.filter((p) => p.estado === 'pendiente' || p.estado === 'pasado');
   const total = pendientes.length;
-
-  // Cada página será un solo pendiente
   const totalPages = total;
   const [page, setPage] = useState(0);
 
-  // Si ya no hay pendientes, lo tratamos aparte
   if (total === 0) {
-    return (  
+    return (
       <div className="flex flex-col justify-between h-full p-6 bg-darkBlue rounded-lg 2x1 text-white select-none">
         <div>
           <h2 className="text-2xl font-bold text-center mb-2">
@@ -28,15 +26,12 @@ const EndMessage = () => {
     );
   }
 
-  // La pregunta pendiente de esta “página”
   const { letra, palabra, definicion } = pendientes[page];
-  const modo = palabra.startsWith(letra.toLowerCase())
-        ? 'inicia'
-        : 'contiene';
+  const modo = palabra.startsWith(letra.toLowerCase()) ? 'inicia' : 'contiene';
 
   return (
     <div className="flex flex-col justify-between h-full p-6 bg-transparent text-white">
-      {/* 1) Header */}
+            {/* 1) Header */}
       <div>
         <h2 className="text-2xl font-bold text-center mb-2 select-none">
           ¡Juego Finalizado!
@@ -90,5 +85,4 @@ const EndMessage = () => {
     </div>
   );
 };
-
 export default EndMessage;
