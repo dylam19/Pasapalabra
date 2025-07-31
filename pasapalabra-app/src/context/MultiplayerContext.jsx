@@ -7,6 +7,10 @@ import {
   obtenerSala
 } from '../services/firebaseGame';
 
+const MultiplayerContext = createContext();
+export const useMultiplayer = () => useContext(MultiplayerContext);
+
+
 export const MultiplayerProvider = ({ roomId, jugadorId, children }) => {
   const [estadoSala, setEstadoSala] = useState(null);
   const [cargando, setCargando] = useState(true);

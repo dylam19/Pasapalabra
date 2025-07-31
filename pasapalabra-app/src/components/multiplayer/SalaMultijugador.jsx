@@ -1,7 +1,7 @@
 // src/components/multiplayer/SalaMultijugador.jsx
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { MultiplayerProvider, useMultiplayer } from '../../context/MultiplayerConext';
+import { MultiplayerProvider, useMultiplayer } from '../../context/MultiplayerContext';
 import Rosco from '../Rosco';
 import Pregunta from '../Pregunta';
 import Controles from '../Controles';
@@ -33,7 +33,7 @@ const VistaDelJugador = () => {
         </div>
     );
     }
-    
+
   const juegoFinalizado = () => {
     if (!estadoSala || !estadoSala.preguntas_p1 || !estadoSala.preguntas_p2) return false;
     return (
