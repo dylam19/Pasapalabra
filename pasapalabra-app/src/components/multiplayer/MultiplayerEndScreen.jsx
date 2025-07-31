@@ -10,6 +10,10 @@ const MultiplayerEndScreen = ({ puntajes }) => {
     );
   }
 
+  if (!estadoSala || !estadoSala.puntajes) {
+  return <div className="text-white">Cargando sala...</div>;
+  }
+
   const { p1 = 0, p2 = 0 } = puntajes;
   const resultado =
     p1 > p2 ? '¡Ganó el Jugador 1!' :
