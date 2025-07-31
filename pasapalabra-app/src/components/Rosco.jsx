@@ -3,10 +3,16 @@ import React from 'react';
 import { useJuego } from '../context/JuegoContext';
 
 const Rosco = ({ preguntas: preguntasProp, indiceActual: indiceProp, started: startedProp }) => {
-  const juego = useJuego();
-  const preguntas = preguntasProp || juego.preguntas;
-  const indiceActual = indiceProp ?? juego.indiceActual;
-  const started = startedProp ?? juego.started;
+  let juego;
+  try {
+    juego = useJuego?.();
+  } catch (e) {
+    juego = {};
+  }
+
+  const preguntas = preguntasProp || juego?.preguntas || [];
+  const indiceActual = indiceProp ?? juego?.indiceActual ?? -1;
+  const started = startedProp ?? juego?.started ?? false;
   const total = preguntas.length;
 
   const size = 420;

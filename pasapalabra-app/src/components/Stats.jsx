@@ -25,8 +25,8 @@ const Stats = ({
   const radius = 36;
   const strokeWidth = 4;
 
-  const minTime = 1;
-  const maxTime = 10;
+  const minTime = 60;
+  const maxTime = 400;
 
   const tiempoBase = tiempoInicialExt ?? tiempoInicial;
   const tiempoActual = tiempoExt ?? tiempoRestante;

@@ -3,8 +3,15 @@ import React from 'react';
 import { useJuego } from '../context/JuegoContext';
 
 const Pregunta = ({ pregunta }) => {
-  const { preguntas, indiceActual } = useJuego();
-  const p = pregunta || preguntas[indiceActual];
+  let p = null;
+
+  try {
+    const juego = useJuego?.();
+    p = pregunta || (juego?.preguntas?.[juego?.indiceActual]);
+  } catch (e) {
+    p = pregunta || null;
+  }
+
   if (!p) return null;
 
   const { letra, palabra, definicion, modo } = p;
