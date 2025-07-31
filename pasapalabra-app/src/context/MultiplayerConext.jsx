@@ -7,18 +7,30 @@ import {
   obtenerSala
 } from '../services/firebaseGame';
 
-const MultiplayerContext = createContext();
-export const useMultiplayer = () => useContext(MultiplayerContext);
-
 export const MultiplayerProvider = ({ roomId, jugadorId, children }) => {
   const [estadoSala, setEstadoSala] = useState(null);
   const [cargando, setCargando] = useState(true);
+  const [estadoJuego, setEstadoJuego] = useState('esperando'); // 'esperando' | 'jugando'
+
+  // Apenas entra el jugador, avisamos que está presente
+  useEffect(() => {
+    if (roomId && jugadorId) {
+      setJugadorPresente(roomId, jugadorId); // Nueva función que actualiza jugadores.p1 o jugadores.p2 a true
+    }
+  }, [roomId, jugadorId]);
 
   // Escuchar cambios en tiempo real
   useEffect(() => {
     const unsubscribe = escucharSala(roomId, (data) => {
       setEstadoSala(data);
       setCargando(false);
+
+      // Lógica de sala de espera
+      if (data?.jugadores?.p1 && data?.jugadores?.p2) {
+        setEstadoJuego('jugando');
+      } else {
+        setEstadoJuego('esperando');
+      }
     });
 
     return () => unsubscribe();

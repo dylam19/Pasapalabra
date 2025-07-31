@@ -22,6 +22,18 @@ const VistaDelJugador = () => {
     puntajePropio,
   } = useMultiplayer();
 
+    if (cargando) {
+    return <div className="text-white text-center mt-10">Cargando sala...</div>;
+    }
+
+    if (estadoJuego === 'esperando') {
+    return (
+        <div className="text-white text-center mt-10 text-3xl font-bold">
+        Esperando a que ambos jugadores estén presentes...
+        </div>
+    );
+    }
+
   const juegoFinalizado = () => {
     if (!estadoSala || !estadoSala.preguntas_p1 || !estadoSala.preguntas_p2) return false;
     return (

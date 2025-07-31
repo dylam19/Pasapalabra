@@ -27,7 +27,18 @@ export const crearSala = async (roomId) => {
       p1: 0,
       p2: 0
     },
+    jugadores: {
+      p1: true,
+      p2: false
+    },
     creada: serverTimestamp()
+  });
+};
+
+export const setJugadorPresente = async (roomId, jugador) => {
+  const salaRef = doc(db, SALAS_COLLECTION, roomId);
+  await updateDoc(salaRef, {
+    [`jugadores.${jugador}`]: true
   });
 };
 
