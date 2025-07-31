@@ -33,7 +33,7 @@ const VistaDelJugador = () => {
         </div>
     );
     }
-
+    
   const juegoFinalizado = () => {
     if (!estadoSala || !estadoSala.preguntas_p1 || !estadoSala.preguntas_p2) return false;
     return (
