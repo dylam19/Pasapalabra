@@ -64,17 +64,10 @@ const Stats = () => {
       let ang = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       if (ang < 0) ang += 360;
 
-      // Prevención de saltos al pasar de 360° a 0°
-      if (lastAngleRef.current !== null) {
-        const diff = Math.abs(ang - lastAngleRef.current);
-        if (diff > 180) return; // salto brusco = ignorar
-      }
-      lastAngleRef.current = ang;
-
       const frac = ang / 360;
       let newTime = Math.round(minTime + frac * (maxTime - minTime));
 
-      // Snapping
+      // Snapping en extremos
       const snapRange = 5;
       if (newTime >= maxTime - snapRange) newTime = maxTime;
       if (newTime <= minTime + snapRange) newTime = minTime;
@@ -84,7 +77,6 @@ const Stats = () => {
 
     const onUp = () => {
       if (dragging) setDragging(false);
-      lastAngleRef.current = null;
     };
 
     window.addEventListener('pointermove', onMove);
@@ -189,7 +181,7 @@ const Stats = () => {
                   fill="#fff"
                   stroke="#D13B83"
                   strokeWidth="2"
-                  style={{ cursor: 'pointer', touchAction: 'none' }}
+                  style={{ cursor: 'pointer', touchAction: 'none', WebkitTapHighlightColor: 'transparent', }}
                   onPointerDown={() => setDragging(true)}
                 />
               </>
