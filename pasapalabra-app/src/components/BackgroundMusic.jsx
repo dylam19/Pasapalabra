@@ -1,6 +1,7 @@
 // src/components/BackgroundMusic.jsx
 import React, { useEffect, useRef } from 'react';
 import { useJuego } from '../context/JuegoContext';
+const sonidoError = new Audio('/sounds/Error.mp3');
 
 const BackgroundMusic = () => {
   const { started, paused, gameOver } = useJuego();
@@ -17,7 +18,9 @@ const BackgroundMusic = () => {
         // en algunos navegadores requiere interacción previa
       });
     } else {
-      // pausar y reiniciar al principio
+        if(gameOver){
+            sonidoError.play();
+        }
       audio.pause();
       audio.currentTime = 0;
     }
