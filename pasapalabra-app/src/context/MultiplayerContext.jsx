@@ -54,10 +54,12 @@ export const MultiplayerProvider = ({
         setEstadoJuego('listo');
       } else {
         setEstadoJuego('jugando');
-        
+
+        console.log("game status updated");
         if (data.estado !== 'jugando' && jugadorId === 'p1') {
           // Solo p1 actualiza el estado para evitar conflictos
           actualizarSala(roomId, { estado: 'jugando' });
+          console.log("room status updated");
         }
 
       }
