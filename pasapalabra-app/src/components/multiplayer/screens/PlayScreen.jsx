@@ -6,6 +6,8 @@ import Controles from '../../Controles';
 import StatsMultiplayer from '../StatsMultiplayer';
 import { useMultiplayer } from '../../../context/MultiplayerContext';
 
+const [cambiandoTurno, setCambiandoTurno] = useState(false);
+const [pausaVisible, setPausaVisible] = useState(false);
 
 export default function PlayScreen({
   preguntasPropias,
@@ -37,6 +39,12 @@ export default function PlayScreen({
         </p>
       </header>
 
+      {pausaVisible && (
+        <div className="text-center text-yellow-300 text-xl font-semibold mb-4 animate-pulse">
+          Cambiando de turno...
+        </div>
+      )}
+
       <div className="flex flex-col md:flex-row gap-6">
         {/* Rosco + Stats */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl flex flex-col">
@@ -62,11 +70,21 @@ export default function PlayScreen({
         {/* Pregunta + Controles */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
           <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
-          {soyElControlador && (
+          {soyElControlador && !cambiandoTurno && (
             <Controles
               onResponder={(tipo) => {
                 responder(tipo);
-                if (tipo !== 'correcto') pasarTurno();
+
+                if (tipo !== 'correcto') {
+                  setCambiandoTurno(true);
+                  setPausaVisible(true);
+
+                  setTimeout(() => {
+                    setPausaVisible(false);
+                    pasarTurno();
+                    setCambiandoTurno(false);
+                  }, 2000);
+                }
               }}
             />
           )}
