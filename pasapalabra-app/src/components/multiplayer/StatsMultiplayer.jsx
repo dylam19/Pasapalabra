@@ -1,48 +1,55 @@
-// src/components/Stats.jsx
+// src/components/StatsMulti.jsx
 import React, { useRef, useState, useEffect } from 'react';
-import { useJuego } from '../context/JuegoContext';
+import TiempoSlider from './TiempoSlider';
 
-const Stats = () => {
-  const {
-    tiempoRestante,
-    tiempoInicial,
-    setTiempoInicial,
-    preguntas,
-    started,
-  } = useJuego();
-
+const StatsMultiplayer = ({
+  // Datos de multijugador
+  tiempoInicial,
+  tiempoRestante,
+  setTiempoInicial,
+  preguntas = [],
+  started = false,
+  isTimerActive = true,
+  onExpire = () => {},
+}) => {
+  // Número de aciertos
   const correctas = preguntas.filter((p) => p.estado === 'correcto').length;
 
-  // Parámetros del SVG
+  // Parámetros SVG
   const size = 90;
   const center = size / 2;
   const radius = 36;
   const strokeWidth = 4;
 
-  // Límites para el slider
+  // Límites del slider
   const minTime = 30;
   const maxTime = 300;
+
   // Parámetros del anillo exterior
   const outerRadius = radius;
   const outerStroke = 4;
   const outerCirc = 2 * Math.PI * outerRadius;
 
   // Progreso del timer
-  const fraction = started ? tiempoRestante / tiempoInicial : 1;
+  const displayTime = started ? tiempoRestante : tiempoInicial;
+  const fraction = started
+    ? tiempoRestante / tiempoInicial
+    : 1;
   const offset = (1 - fraction) * 2 * Math.PI * radius;
 
-  // Para dibujar el handle del slider
+  // Posición del handle
   const sliderFrac = (tiempoInicial - minTime) / (maxTime - minTime);
   const sliderAngle = sliderFrac * 360 - 90;
   const sliderRad = (sliderAngle * Math.PI) / 180;
   const handleX = center + outerRadius * Math.cos(sliderRad);
   const handleY = center + outerRadius * Math.sin(sliderRad);
 
+  // Estado edición/drag
   const [editing, setEditing] = useState(false);
   const [dragging, setDragging] = useState(false);
   const wrapperRef = useRef(null);
 
-  // Cuando arranca el juego, cerramos cualquier modo edición/drag
+  // Al iniciar, cerramos edición/drag
   useEffect(() => {
     if (started) {
       setEditing(false);
@@ -50,7 +57,7 @@ const Stats = () => {
     }
   }, [started]);
 
-  // Evento global para arrastrar el handle
+  // Drag handler
   useEffect(() => {
     const onMove = (e) => {
       if (!dragging || !editing) return;
@@ -62,31 +69,29 @@ const Stats = () => {
       let ang = Math.atan2(dy, dx) * (180 / Math.PI) + 90;
       if (ang < 0) ang += 360;
       const frac = ang / 360;
-      
-      // Cálculo bruto de tiempo
       let newTime = Math.round(minTime + frac * (maxTime - minTime));
-
-      // ── SNAPPING: tope firme en los extremos ──
-      const snapRange = 5; // tolerancia de 5 segundos
+      const snapRange = 5;
       if (newTime >= maxTime - snapRange) newTime = maxTime;
       if (newTime <= minTime + snapRange) newTime = minTime;
-
       setTiempoInicial(Math.min(maxTime, Math.max(minTime, newTime)));
     };
-
     const onUp = () => {
       if (dragging) setDragging(false);
     };
-
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onUp);
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
     };
-  }, [dragging, editing, setTiempoInicial]);
+  }, [dragging, editing, setTiempoInicial, center, minTime, maxTime]);
 
-  const displayTime = started ? tiempoRestante : tiempoInicial;
+  // Timeout en playing
+  useEffect(() => {
+    if (started && isTimerActive && tiempoRestante === 0) {
+      onExpire();
+    }
+  }, [started, isTimerActive, tiempoRestante, onExpire]);
 
   return (
     <div
@@ -97,11 +102,8 @@ const Stats = () => {
         alignItems: 'center',
       }}
     >
-      {/** CELDA 1: TIMER **/}
-      <div
-        className="relative w-[80px] h-[80px]"
-        ref={wrapperRef}
-      >
+      {/* CELDA 1: TIMER */}
+      <div className="relative w-[80px] h-[80px]" ref={wrapperRef}>
         <svg width={size} height={size}>
           <defs>
             <linearGradient id="timerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -137,7 +139,7 @@ const Stats = () => {
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
 
-          {/* Texto centrado */}
+          {/* Texto */}
           <text
             x={center} y={center}
             textAnchor="middle" dominantBaseline="middle"
@@ -148,7 +150,7 @@ const Stats = () => {
             {displayTime}
           </text>
 
-          {/* Slider radial (modo edición) */}
+          {/* Slider radial */}
           {editing && !started && (
             <>
               <circle
@@ -174,26 +176,27 @@ const Stats = () => {
         </svg>
       </div>
 
-      {/** CELDA 2: BOTÓN ⚙️ (o espacio vacío) **/}
+      {/* CELDA 2: BOTÓN */}
       <div style={{ justifySelf: 'center' }}>
         {!started && (
           <button
             onClick={() => setEditing((e) => !e)}
-            className="p-2 rounded-full shadow-md text-xl">
-          {editing 
-            ? <span className="material-symbols-outlined text-[#fff]">
+            className="p-2 rounded-full shadow-md text-xl"
+          >
+            {editing ? (
+              <span className="material-symbols-outlined text-[#fff]">
                 check_circle
               </span>
-            : <span className="material-symbols-outlined text-[#fff]">
+            ) : (
+              <span className="material-symbols-outlined text-[#fff]">
                 settings
               </span>
-          }
+            )}
           </button>
         )}
       </div>
 
-
-      {/** CELDA 3: CONTADOR DE ACIERTOS **/}
+      {/* CELDA 3: CONTADOR */}
       <div className="w-[80px] h-[80px]">
         <svg width={size} height={size}>
           <defs>
@@ -225,4 +228,4 @@ const Stats = () => {
   );
 };
 
-export default Stats;
+export default StatsMultiplayer;

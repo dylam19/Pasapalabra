@@ -31,13 +31,14 @@ export default function PlayScreen({
             <Rosco preguntas={esMiTurno ? preguntasPropias : preguntasDelOtro} />
           </div>
           <div className="mt-4">
-            <Stats
-              tiempoInicial={null}
-              tiempoRestante={2}
-              puntaje={puntajePropio}
-              editable={false}
-              isTimerActive={esMiTurno}
-              onExpire={pasarTurno}
+            <StatsMultiplayer
+            tiempoInicial={tiempoInicial}
+            tiempoRestante={tiempoRestante}
+            setTiempoInicial={setTiempoInicial}
+            preguntas={preguntasPropias}
+            started={true}
+            isTimerActive={esMiTurno}
+            onExpire={pasarTurno}
             />
           </div>
         </div>

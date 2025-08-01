@@ -1,7 +1,7 @@
 // src/components/multiplayer/ReadyScreen.jsx
 import React from 'react';
 import Rosco from '../../Rosco';
-import Stats from '../../Stats';
+import Stats from '../StatsMultiplayer';
 
 export default function ReadyScreen({ 
   tiempoInicial,      // number: viene de Firestore
@@ -24,13 +24,11 @@ export default function ReadyScreen({
           </div>
           <div className="mt-4">
             {/* editable=true fuerza slider+settings */}
-            <Stats
+            <StatsMultiplayer
               tiempoInicial={tiempoInicial}
-              tiempoRestante={null}       // null indica que no hay contador activo
-              puntaje={puntajePropio}
-              editable={true}             // muestra slider + botón settings
-              onTimeChange={setTiempoInicial}
-              onConfirm={onConfirmReady}  // podemos aprovechar el botón settings para confirmar
+              setTiempoInicial={setTiempoInicial}
+              preguntas={preguntasPropias}
+              started={false}
             />
           </div>
         </div>
