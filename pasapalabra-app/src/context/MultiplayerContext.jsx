@@ -58,7 +58,7 @@ export const MultiplayerProvider = ({
       setCargando(false);
 
       setPausaGlobalState(data?.pausa || false);
-      
+
       // 3) Actualizar estadoJuego según jugadores y listo
       const p1 = data?.jugadores?.p1 || false;
       const p2 = data?.jugadores?.p2 || false;
@@ -168,7 +168,7 @@ export const MultiplayerProvider = ({
         // turno y control
         esMiTurno,
         soyElControlador,
-        setPausaGlobal: (estado) => setPausaGlobal(roomId, estado),
+        pausaGlobal,
 
         // datos rosco
         preguntasPropias,

@@ -5,7 +5,7 @@ import Pregunta from '../../Pregunta';
 import Controles from '../../Controles';
 import StatsMultiplayer from '../StatsMultiplayer';
 import { useMultiplayer } from '../../../context/MultiplayerContext';
-
+import { setPausaGlobal } from '../../../services/firebaseGame';
 
 export default function PlayScreen({
   preguntasPropias,
@@ -83,8 +83,11 @@ export default function PlayScreen({
                     setPausaGlobal(true);
 
                     setTimeout(() => {
-                      setPausaGlobal(false);
+                      setPausaVisible(false);
                       pasarTurno();
+                      setCambiandoTurno(false);
+
+                      setPausaGlobal(roomId, false); // pausa terminada
                     }, 2000);
                   }
                 }}
