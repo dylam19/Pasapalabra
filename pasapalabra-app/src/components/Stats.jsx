@@ -1,6 +1,5 @@
 // src/components/Stats.jsx
 import React, { useRef, useState, useEffect } from 'react';
-import { useJuego } from '../context/JuegoContext';
 import TiempoSlider from './TiempoSlider';
 
 const Stats = ({
