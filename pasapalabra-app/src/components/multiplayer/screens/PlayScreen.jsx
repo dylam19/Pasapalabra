@@ -67,7 +67,7 @@ export default function PlayScreen({
               Cambiando de turno...
             </div>
           )}
-
+          
           {!pausaGlobal && (
             <>
               <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
