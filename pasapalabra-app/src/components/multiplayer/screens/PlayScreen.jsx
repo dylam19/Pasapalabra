@@ -1,13 +1,10 @@
 // src/components/multiplayer/PlayScreen.jsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Rosco from '../../Rosco';
 import Pregunta from '../../Pregunta';
 import Controles from '../../Controles';
 import StatsMultiplayer from '../StatsMultiplayer';
 import { useMultiplayer } from '../../../context/MultiplayerContext';
-
-const [cambiandoTurno, setCambiandoTurno] = useState(false);
-const [pausaVisible, setPausaVisible] = useState(false);
 
 export default function PlayScreen({
   preguntasPropias,
@@ -18,7 +15,9 @@ export default function PlayScreen({
   pasarTurno,
 }) {
 
-  
+  const [cambiandoTurno, setCambiandoTurno] = useState(false);
+  const [pausaVisible, setPausaVisible] = useState(false);
+
   const { estadoSala } = useMultiplayer();
 
   const jugadorEnTurno = estadoSala.turno;
