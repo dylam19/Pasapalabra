@@ -82,7 +82,7 @@ export const MultiplayerProvider = ({
 
   // 4) Resetear tiempo cuando arranca el juego o cambia turno
   useEffect(() => {
-    if (estadoJuego === 'jugando') {
+    if (estadoJuego === 'jugando' && typeof tiempoInicial === 'number') {
       setTiempoRestante(tiempoInicial);
     }
   }, [estadoJuego, tiempoInicial]);
