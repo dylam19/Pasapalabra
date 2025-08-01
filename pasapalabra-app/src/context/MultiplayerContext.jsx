@@ -27,6 +27,7 @@ export const MultiplayerProvider = ({
   const [estadoJuego, setEstadoJuego]     = useState('esperando'); // 'esperando' | 'listo' | 'jugando'
   const [tiempoInicial, setTiempoInicial] = useState(150);
   const [tiempoRestante, setTiempoRestante] = useState(10);
+  const tiempoRestanteCompartido = estadoSala?.tiemposRestantes?.[estadoSala?.turno] ?? tiempoRestante;
 
   const marcarListo = async () => {
     try {
@@ -94,12 +95,20 @@ export const MultiplayerProvider = ({
 
     const timer = setInterval(() => {
       setTiempoRestante((t) => {
-        if (t <= 1) {
+        const nuevoTiempo = t <= 1 ? 0 : t - 1;
+
+        // Actualizar tiempo restante del jugador en turno en Firestore
+        actualizarSala(roomId, {
+          [`tiemposRestantes.${jugadorId}`]: nuevoTiempo
+        });
+
+        // ⏱️ Si llega a 0, se pasa el turno
+        if (nuevoTiempo === 0) {
           clearInterval(timer);
           responder('pasado').then(() => pasarTurno());
-          return 0;
         }
-        return t - 1;
+
+        return nuevoTiempo;
       });
     }, 1000);
 
@@ -150,7 +159,7 @@ export const MultiplayerProvider = ({
         // temporizador
         tiempoInicial,
         setTiempoInicial,
-        tiempoRestante,
+        tiempoRestante : tiempoRestanteCompartido,
 
         // turno y control
         esMiTurno,
