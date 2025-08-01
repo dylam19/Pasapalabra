@@ -18,7 +18,7 @@ export default function PlayScreen({
   puntajePropio,
 }) {
 
-  const { tiempoInicial, tiempoRestante, setTiempoInicial } = useMultiplayer();
+  const { tiempoInicial, tiempoRestante, setTiempoInicial, estadoSala } = useMultiplayer();
   const letraActual = preguntaActual?.letra;
   const indiceActual = preguntasPropias.findIndex(p => p.letra === letraActual);
   const preguntasEnJuego = estadoSala?.[`preguntas_${estadoSala?.turno}`] ?? [];
