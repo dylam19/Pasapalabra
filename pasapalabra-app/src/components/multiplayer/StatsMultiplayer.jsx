@@ -1,6 +1,6 @@
 // src/components/StatsMulti.jsx
 import React, { useRef, useState, useEffect } from 'react';
-import TiempoSlider from './TiempoSlider';
+import TiempoSlider from './../TiempoSlider';
 
 const StatsMultiplayer = ({
   // Datos de multijugador
