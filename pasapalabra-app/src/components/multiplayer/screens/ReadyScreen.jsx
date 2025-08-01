@@ -4,6 +4,7 @@ import Rosco from '../../Rosco';
 import StatsMultiplayer from '../StatsMultiplayer';
 
 export default function ReadyScreen({ 
+  preguntasPropias,
   tiempoInicial,      // number: viene de Firestore
   setTiempoInicial,   // fn: actualiza en Firestore
   puntajePropio,      // número (será 0 al principio)

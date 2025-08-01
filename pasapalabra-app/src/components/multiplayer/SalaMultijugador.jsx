@@ -36,6 +36,7 @@ function VistaDelJugador() {
   if (estadoJuego === 'listo') {
     return (
       <ReadyScreen
+        preguntasPropias={preguntasPropias}
         tiempoInicial={tiempoInicial}
         setTiempoInicial={setTiempoInicial}
         puntajePropio={puntajePropio}
