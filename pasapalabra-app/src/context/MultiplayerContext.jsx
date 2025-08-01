@@ -21,15 +21,16 @@ export const MultiplayerProvider = ({
   jugadorId,
   children
 }) => {
-  const [estadoSala, setEstadoSala] = useState(null);
-  const [cargando, setCargando] = useState(true);
-  const [estadoJuego, setEstadoJuego] = useState('esperando'); // 'esperando' o 'jugando'
+  const [estadoSala, setEstadoSala]       = useState(null);
+  const [cargando, setCargando]           = useState(true);
+  const [estadoJuego, setEstadoJuego]     = useState('esperando'); // 'esperando' | 'listo' | 'jugando'
+  const [tiempoInicial, setTiempoInicial] = useState(10);
+  const [tiempoRestante, setTiempoRestante] = useState(10);
 
   // 1) Avisar presencia al entrar
   useEffect(() => {
     if (roomId && jugadorId) {
-      setJugadorPresente(roomId, jugadorId)
-        .catch(console.error);
+      setJugadorPresente(roomId, jugadorId).catch(console.error);
     }
   }, [roomId, jugadorId]);
 
@@ -41,42 +42,71 @@ export const MultiplayerProvider = ({
       setEstadoSala(data);
       setCargando(false);
 
-      // 3) Actualizar estadoJuego según jugadores
+      // 3) Actualizar estadoJuego según jugadores y listo
       const p1 = data?.jugadores?.p1 || false;
       const p2 = data?.jugadores?.p2 || false;
-      setEstadoJuego(p1 && p2 ? 'jugando' : 'esperando');
+      const l1 = data?.listo?.p1    || false;
+      const l2 = data?.listo?.p2    || false;
+
+      if (!p1 || !p2) {
+        setEstadoJuego('esperando');
+      } else if (!l1 || !l2) {
+        setEstadoJuego('listo');
+      } else {
+        setEstadoJuego('jugando');
+      }
     });
 
     return () => unsubscribe();
   }, [roomId]);
 
-  // 4) Funciones de juego
+  // 4) Resetear tiempo cuando arranca el juego o cambia turno
+  useEffect(() => {
+    if (estadoJuego === 'jugando') {
+      setTiempoRestante(tiempoInicial);
+    }
+  }, [estadoJuego, tiempoInicial]);
+
+  // 5) Decrementar tiempo cada segundo SI es mi turno
   const esMiTurno = estadoSala?.turno === jugadorId;
+  useEffect(() => {
+    if (estadoJuego !== 'jugando' || !esMiTurno) return;
+
+    const timer = setInterval(() => {
+      setTiempoRestante((t) => {
+        if (t <= 1) {
+          clearInterval(timer);
+          responder('pasado').then(() => pasarTurno());
+          return 0;
+        }
+        return t - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [estadoJuego, esMiTurno]);
+
+  // 6) Resto de variables y funciones de juego
   const soyElControlador = estadoSala?.turno !== jugadorId;
-  const preguntasPropias =
-    estadoSala?.[`preguntas_${jugadorId}`] || [];
-  const preguntasDelOtro =
-    estadoSala?.[`preguntas_${estadoSala?.turno}`] || [];
-  const puntajePropio = estadoSala?.puntajes?.[jugadorId] ?? 0;
-  const preguntaActual = estadoSala
-    ? estadoSala[`preguntas_${estadoSala.turno}`]?.find(
-        (p) => p.estado === 'pendiente'
-      )
+  const preguntasPropias = estadoSala?.[`preguntas_${jugadorId}`] || [];
+  const preguntasDelOtro = estadoSala?.[`preguntas_${estadoSala?.turno}`] || [];
+  const puntajePropio    = estadoSala?.puntajes?.[jugadorId]    ?? 0;
+  const preguntaActual   = estadoSala
+    ? estadoSala[`preguntas_${estadoSala.turno}`]?.find(p => p.estado === 'pendiente')
     : null;
 
   const responder = async (nuevoEstado) => {
     if (!estadoSala || !preguntaActual) return;
 
     const clave = `preguntas_${estadoSala.turno}`;
-    const arr = [...estadoSala[clave]];
-    const idx = arr.findIndex((p) => p.letra === preguntaActual.letra);
+    const arr   = [...estadoSala[clave]];
+    const idx   = arr.findIndex(p => p.letra === preguntaActual.letra);
     if (idx === -1) return;
 
     arr[idx] = { ...arr[idx], estado: nuevoEstado };
     const nuevosPuntajes = { ...estadoSala.puntajes };
     if (nuevoEstado === 'correcto') {
-      nuevosPuntajes[estadoSala.turno] =
-        (nuevosPuntajes[estadoSala.turno] || 0) + 1;
+      nuevosPuntajes[estadoSala.turno] = (nuevosPuntajes[estadoSala.turno] || 0) + 1;
     }
 
     await actualizarSala(roomId, {
@@ -93,16 +123,20 @@ export const MultiplayerProvider = ({
   return (
     <MultiplayerContext.Provider
       value={{
-        // datos de sala
         estadoSala,
         cargando,
         estadoJuego,
 
-        // helpers de turno
+        // temporizador
+        tiempoInicial,
+        setTiempoInicial,
+        tiempoRestante,
+
+        // turno y control
         esMiTurno,
         soyElControlador,
 
-        // preguntas y puntajes
+        // datos rosco
         preguntasPropias,
         preguntasDelOtro,
         preguntaActual,

@@ -7,6 +7,8 @@ export const useJuego = () => useContext(JuegoContext);
 
 export const JuegoProvider = ({ children }) => {
   const TIEMPO_DEFAULT = 180;
+  const minTime = 1;      // tiempo mínimo en segundos
+  const maxTime = 30;     // tiempo máximo en segundos (o el valor que quieras)
 
   // — Helper: genera un rosco nuevo a partir de diccionario.json —
   const generarRosco = () =>
@@ -133,6 +135,8 @@ export const JuegoProvider = ({ children }) => {
         tiempoInicial,
         setTiempoInicial,
         tiempoRestante,
+        minTime,
+        maxTime,
         started,
         paused,
         gameOver,

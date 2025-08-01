@@ -37,6 +37,29 @@ const VistaDelJugador = () => {
     );
   }
 
+  if (estadoJuego === 'listo') {
+  // ambos conectados, pero todavía no confirman
+  return (
+    <div className="text-center mt-10 space-y-6">
+      <h2 className="text-white text-3xl">¡Ambos conectados!</h2>
+      {/* Aquí podemos mostrar el slider exacto de clásico */}
+      <Stats puntaje={0} editable={true} />
+
+      <button
+        className="bg-green-500 text-white px-6 py-2 rounded"
+        onClick={() =>
+          actualizarSala(roomId, {
+            [`listo.${jugadorId}`]: true
+          })
+        }
+      >
+        Estoy listo
+      </button>
+    </div>
+    );
+    }
+
+
   const juegoFinalizado = () => {
     if (!estadoSala?.preguntas_p1 || !estadoSala?.preguntas_p2) return false;
     return (
