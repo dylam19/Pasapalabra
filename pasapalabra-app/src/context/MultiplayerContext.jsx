@@ -14,6 +14,7 @@ import {
 } from '../services/firebaseGame';
 
 const MultiplayerContext = createContext();
+
 export const useMultiplayer = () => useContext(MultiplayerContext);
 
 export const MultiplayerProvider = ({
@@ -26,6 +27,17 @@ export const MultiplayerProvider = ({
   const [estadoJuego, setEstadoJuego]     = useState('esperando'); // 'esperando' | 'listo' | 'jugando'
   const [tiempoInicial, setTiempoInicial] = useState(150);
   const [tiempoRestante, setTiempoRestante] = useState(10);
+
+  const marcarListo = async () => {
+    try {
+      await actualizarSala(roomId, {
+        [`listo.${jugadorId}`]: true,
+      });
+      console.log(`[OK] Jugador ${jugadorId} marcó listo`);
+    } catch (err) {
+      console.error('Error al marcar listo:', err);
+    }
+  };
 
   // 1) Avisar presencia al entrar
   useEffect(() => {
@@ -152,6 +164,7 @@ export const MultiplayerProvider = ({
 
         // acciones
         responder,
+        marcarListo,
         pasarTurno
       }}
     >
