@@ -7,7 +7,6 @@ import Pregunta from '../Pregunta';
 import Controles from '../Controles';
 import Stats from '../Stats';
 import MultiplayerEndScreen from './MultiplayerEndScreen';
-
 const VistaDelJugador = () => {
   const {
     estadoSala,
@@ -23,29 +22,28 @@ const VistaDelJugador = () => {
     puntajePropio,
   } = useMultiplayer();
 
-    if (cargando) {
-    return <div className="text-white text-center mt-10">Cargando sala...</div>;
-    }
+    console.log('estadoJuego:', estadoJuego, 'jugadores:', estadoSala?.jugadores);
 
-    if (estadoJuego === 'esperando') {
+
+  if (cargando || !estadoSala) {
+    return <div className="text-white text-center mt-10">Cargando sala...</div>;
+  }
+
+  if (estadoJuego === 'esperando') {
     return (
-        <div className="text-white text-center mt-10 text-3xl font-bold">
+      <div className="text-white text-center mt-10 text-3xl font-bold">
         Esperando a que ambos jugadores estén presentes...
-        </div>
+      </div>
     );
-    }
+  }
 
   const juegoFinalizado = () => {
-    if (!estadoSala || !estadoSala.preguntas_p1 || !estadoSala.preguntas_p2) return false;
+    if (!estadoSala?.preguntas_p1 || !estadoSala?.preguntas_p2) return false;
     return (
       !estadoSala.preguntas_p1.some((p) => p.estado === 'pendiente' || p.estado === 'pasado') &&
       !estadoSala.preguntas_p2.some((p) => p.estado === 'pendiente' || p.estado === 'pasado')
     );
   };
-
-  if (cargando || !estadoSala) {
-    return <div className="text-white text-center mt-10">Cargando sala...</div>;
-  }
 
   if (juegoFinalizado()) {
     return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
@@ -76,7 +74,6 @@ const VistaDelJugador = () => {
           <Rosco preguntas={esMiTurno ? preguntasPropias : preguntasDelOtro} />
           <Stats puntaje={puntajePropio} editable={false} />
         </div>
-
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
           <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
           {soyElControlador && (
@@ -93,14 +90,16 @@ const VistaDelJugador = () => {
   );
 };
 
-const SalaMultijugador = () => {
+  const SalaMultijugador = () => {
   const { roomId, jugadorId } = useParams();
 
-  return (
-    <MultiplayerProvider roomId={roomId} jugadorId={jugadorId}>
-      <VistaDelJugador />
-    </MultiplayerProvider>
-  );
-};
+    return (
+        <MultiplayerProvider roomId={roomId} jugadorId={jugadorId}>
+        <VistaDelJugador />
+        </MultiplayerProvider>
+        );
+    };
+    
+
 
 export default SalaMultijugador;
