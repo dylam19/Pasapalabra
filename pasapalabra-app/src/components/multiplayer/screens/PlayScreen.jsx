@@ -3,7 +3,7 @@ import React from 'react';
 import Rosco from '../../Rosco';
 import Pregunta from '../../Pregunta';
 import Controles from '../../Controles';
-import Stats from '../../Stats';
+import Stats from '../StatsMultiplayer';
 
 export default function PlayScreen({
   preguntasPropias,

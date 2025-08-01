@@ -1,4 +1,4 @@
-// src/components/StatsMulti.jsx
+// src/components/StatsMultiplayer.jsx
 import React, { useRef, useState, useEffect } from 'react';
 import TiempoSlider from './../TiempoSlider';
 
