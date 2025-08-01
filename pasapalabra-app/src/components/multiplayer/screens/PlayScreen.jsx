@@ -9,16 +9,20 @@ import { useMultiplayer } from '../../../context/MultiplayerContext';
 
 export default function PlayScreen({
   preguntasPropias,
-  preguntasDelOtro,
   preguntaActual,
   esMiTurno,
   soyElControlador,
   responder,
   pasarTurno,
-  puntajePropio,
 }) {
 
-  const { tiempoInicial, tiempoRestante, setTiempoInicial, estadoSala } = useMultiplayer();
+  
+  const { estadoSala } = useMultiplayer();
+
+  const jugadorEnTurno = estadoSala.turno;
+  const tiempoInicialTurno = estadoSala?.tiempos?.[jugadorEnTurno] ?? 150;
+  const tiempoRestanteTurno = estadoSala?.tiemposRestantes?.[jugadorEnTurno] ?? 150;
+
   const letraActual = preguntaActual?.letra;
   const indiceActual = preguntasPropias.findIndex(p => p.letra === letraActual);
   const preguntasEnJuego = estadoSala?.[`preguntas_${estadoSala?.turno}`] ?? [];
@@ -44,9 +48,9 @@ export default function PlayScreen({
           </div>
           <div className="mt-4">
             <StatsMultiplayer
+              tiempoInicial={tiempoInicialTurno}
+              tiempoRestante={tiempoRestanteTurno}
               preguntas={preguntasEnJuego}
-              tiempoInicial={tiempoInicial}
-              tiempoRestante={tiempoRestante}
               started={true}
               isTimerActive={esMiTurno}
               onExpire={pasarTurno}
