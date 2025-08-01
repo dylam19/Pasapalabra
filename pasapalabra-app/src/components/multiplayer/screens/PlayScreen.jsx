@@ -1,5 +1,6 @@
 // src/components/multiplayer/PlayScreen.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useParams } from 'react-router-dom';
 import Rosco from '../../Rosco';
 import Pregunta from '../../Pregunta';
 import Controles from '../../Controles';
@@ -15,11 +16,10 @@ export default function PlayScreen({
   responder,
   pasarTurno,
 }) {
-
+  const { roomId } = useParams();
   const [cambiandoTurno, setCambiandoTurno] = useState(false);
-  const [pausaVisible, setPausaVisible] = useState(false);
 
-  const { estadoSala, pausaGlobal, setPausaGlobal } = useMultiplayer();
+  const { estadoSala, pausaGlobal } = useMultiplayer();
 
   const jugadorEnTurno = estadoSala.turno;
   const tiempoInicialTurno = estadoSala?.tiempos?.[jugadorEnTurno] ?? 150;
@@ -28,7 +28,6 @@ export default function PlayScreen({
   const letraActual = preguntaActual?.letra;
   const indiceActual = preguntasPropias.findIndex(p => p.letra === letraActual);
   const preguntasEnJuego = estadoSala?.[`preguntas_${estadoSala?.turno}`] ?? [];
-
 
   return (
     <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
@@ -40,13 +39,14 @@ export default function PlayScreen({
       </header>
 
       <div className="flex flex-col md:flex-row gap-6">
-        {/* Rosco + Stats */}
+        {/* ROSCO + STATS */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl flex flex-col">
           <div className="flex-1">
-            <Rosco  preguntas={preguntasEnJuego}
-                    indiceActual={indiceActual}
-                    started={true}
-             />
+            <Rosco
+              preguntas={preguntasEnJuego}
+              indiceActual={indiceActual}
+              started={true}
+            />
           </div>
           <div className="mt-4">
             <StatsMultiplayer
@@ -57,47 +57,41 @@ export default function PlayScreen({
               isTimerActive={esMiTurno}
               onExpire={pasarTurno}
             />
-
           </div>
         </div>
 
-        {/* Pregunta + Controles */}
+        {/* PREGUNTA + CONTROLES */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
+          {pausaGlobal && (
+            <div className="text-center text-yellow-300 text-xl font-semibold mb-4 animate-pulse">
+              Cambiando de turno...
+            </div>
+          )}
 
-        {pausaGlobal && (
-          <div className="text-center text-yellow-300 text-xl font-semibold mb-4 animate-pulse">
-            Cambiando de turno...
-          </div>
-        )}
+          {!pausaGlobal && (
+            <>
+              <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
+              {soyElControlador && (
+                <Controles
+                  onResponder={(tipo) => {
+                    responder(tipo);
 
-        {/* Ocultar pregunta si hay pausa global */}
-        {!pausaGlobal && (
-          <>
-            <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
-            {soyElControlador && (
-              <Controles
-                onResponder={(tipo) => {
-                  responder(tipo);
+                    if (tipo !== 'correcto') {
+                      setCambiandoTurno(true);
+                      setPausaGlobal(roomId, true);
 
-                  if (tipo !== 'correcto') {
-                    setPausaGlobal(true);
-
-                    setTimeout(() => {
-                      setPausaVisible(false);
-                      pasarTurno();
-                      setCambiandoTurno(false);
-
-                      setPausaGlobal(roomId, false); // pausa terminada
-                    }, 2000);
-                  }
-                }}
-              />
-            )}
-          </>
-        )}
-
+                      setTimeout(() => {
+                        setPausaGlobal(roomId, false);
+                        pasarTurno();
+                        setCambiandoTurno(false);
+                      }, 2000);
+                    }
+                  }}
+                />
+              )}
+            </>
+          )}
         </div>
-
       </div>
     </div>
   );
