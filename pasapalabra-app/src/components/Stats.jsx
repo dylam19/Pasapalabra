@@ -4,24 +4,26 @@ import { useJuego } from '../context/JuegoContext';
 import TiempoSlider from './TiempoSlider';
 
 const Stats = ({
-  // Props que vienen de multiplayer (cuando las pasas)
-  tiempoRestante: tiempoExt,
   tiempoInicial: tiempoInicialExt,
+  tiempoRestante: tiempoExt,
   puntaje: puntajeExt,
-  // Para multijugador:
+  onTimeChange,
+  onConfirm,
   isTimerActive = true,
   onExpire = () => {},
-  // En clásico sigue siendo true para mostrar slider+botón
   editable = true,
 }) => {
-  // Contexto clásico
+  // ——— SOLO CLÁSICO: saco del contexto ———
+  const contexto = (tiempoInicialExt == null && tiempoExt == null)
+    ? useJuego()   // sólo si no vinieron props multijugador
+    : {};
   const {
-    tiempoRestante,
-    tiempoInicial,
-    setTiempoInicial,
-    preguntas,
-    started,
-  } = useJuego();
+    tiempoRestante: ctxTimeRest = 0,
+    tiempoInicial:  ctxTimeInit = 0,
+    setTiempoInicial: ctxSetTime,
+    preguntas = [],
+    started = false,
+  } = contexto;
 
   // Número de aciertos: o viene por prop, o lo calculo desde el contexto
   const correctas =
