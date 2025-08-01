@@ -169,7 +169,7 @@ export const MultiplayerProvider = ({
         esMiTurno,
         soyElControlador,
         pausaGlobal,
-
+        
         // datos rosco
         preguntasPropias,
         preguntasDelOtro,
