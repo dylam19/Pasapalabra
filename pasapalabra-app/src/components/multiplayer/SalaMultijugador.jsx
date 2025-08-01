@@ -45,11 +45,31 @@ function VistaDelJugador() {
     );
   }
 
+   // fin por out of time:
+  const { tiemposRestantes } = estadoSala;
+  if (estadoJuego === 'jugando'
+      && tiemposRestantes?.p1 === 0
+      && tiemposRestantes?.p2 === 0) {
+    return (
+      <EndScreen
+        preguntas_p1={estadoSala.preguntas_p1}
+        preguntas_p2={estadoSala.preguntas_p2}
+        puntajes={estadoSala.puntajes}
+      />
+    );
+  }
+
   // si las listas de preguntas ya terminaron:
   const partidaTerminada = !estadoSala.preguntas_p1.some(p => ['pendiente','pasado'].includes(p.estado))
                         && !estadoSala.preguntas_p2.some(p => ['pendiente','pasado'].includes(p.estado));
   if (partidaTerminada) {
-    return <EndScreen puntajes={estadoSala.puntajes} />;
+    return (
+      <EndScreen
+        preguntas_p1={estadoSala.preguntas_p1}
+        preguntas_p2={estadoSala.preguntas_p2}
+        puntajes={estadoSala.puntajes}
+      />
+    );
   }
 
   // modo “jugando”

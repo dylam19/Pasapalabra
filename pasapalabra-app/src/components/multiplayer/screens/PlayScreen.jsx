@@ -30,22 +30,26 @@ export default function PlayScreen({
   const preguntasEnJuego = estadoSala?.[`preguntas_${estadoSala?.turno}`] ?? [];
 
   return (
-    <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
+      <div className={`min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]`}>
       <header className="text-center mb-4">
         <h2 className="text-3xl font-bold">Sala Multijugador</h2>
         <p className="text-lg">
-          {esMiTurno ? 'Es tu turno' : 'Esperando la jugada del otro'}
+          {esMiTurno
+            ? 'Tu turno: Responde la definición'
+            : 'Turno del oponente: Marca la respuesta de tu rival'}
         </p>
       </header>
 
       <div className="flex flex-col md:flex-row gap-6">
         {/* ROSCO + STATS */}
-        <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl flex flex-col">
+        <div className="flex-1 bg-blue rounded-2xl p-4 shadow-xl flex flex-col">
           <div className="flex-1">
+            {console.log(jugadorEnTurno)}
             <Rosco
               preguntas={preguntasEnJuego}
               indiceActual={indiceActual}
               started={true}
+              player={jugadorEnTurno}
             />
           </div>
           <div className="mt-4">
@@ -67,7 +71,7 @@ export default function PlayScreen({
               Cambiando de turno...
             </div>
           )}
-          
+
           {!pausaGlobal && (
             <>
               <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />

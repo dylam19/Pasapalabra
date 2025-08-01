@@ -22,8 +22,8 @@ const StatsMultiplayer = ({
   const strokeWidth = 4;
 
   // Límites del slider
-  const minTime = 30;
-  const maxTime = 300;
+  const minTime = 1;
+  const maxTime = 20;
 
   // Parámetros del anillo exterior
   const outerRadius = radius;

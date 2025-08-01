@@ -13,8 +13,8 @@ export default function ReadyScreen({
   return (
     <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
       <header className="text-center mb-4">
-        <h2 className="text-3xl font-bold">¡Ambos conectados!</h2>
-        <p className="text-lg">Ajusta el tiempo y confirma cuando estés listo</p>
+        <h2 className="text-3xl font-bold">¡Listos para empezar!</h2>
+        <p className="text-lg">Selecciona tu tiempo y pulsa “¡Listo!” para continuar</p>
       </header>
 
       <div className="flex flex-col md:flex-row gap-6">

@@ -61,10 +61,12 @@ const Jugar = () => {
   }
 
   // 4) Fin del juego
+
+  const { preguntas: preguntasJuego } = useJuego();
   return (
     <>
       <div className="mt-6">
-        <EndMessage />
+        <EndMessage preguntas={preguntasJuego} />
       </div>
       <div className="flex justify-center mt-6 select-none">
         <button

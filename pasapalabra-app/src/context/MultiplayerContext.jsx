@@ -10,6 +10,7 @@ import {
   escucharSala,
   actualizarSala,
   obtenerSala,
+  reiniciarSala,
   setJugadorPresente
 } from '../services/firebaseGame';
 
@@ -29,6 +30,30 @@ export const MultiplayerProvider = ({
   const [tiempoRestante, setTiempoRestante] = useState(10);
   const tiempoRestanteCompartido = estadoSala?.tiemposRestantes?.[estadoSala?.turno] ?? tiempoRestante;
   const [pausaGlobal, setPausaGlobalState] = useState(false);
+
+  /**
+   * Reinicia la sala para una nueva partida en el mismo roomId.
+   * Llama a crearSala, que sobrescribe el doc con nuevos rosco, puntajes y tiempos.
+   */
+  const iniciarJuego = async () => {
+    try {
+      await reiniciarSala(roomId);
+      console.log('[OK] Reiniciada partida en sala', roomId);
+    } catch (err) {
+      console.error('Error al reiniciar partida:', err);
+    }
+  };
+
+  const actualizarTiempoInicial = async (nuevoTiempo) => {
+    // 1) React state
+    setTiempoInicial(nuevoTiempo);
+
+    // 2) Firestore: tiempos y tiemposRestantes
+    await actualizarSala(roomId, {
+      [`tiempos.${jugadorId}`]: nuevoTiempo,
+      [`tiemposRestantes.${jugadorId}`]: nuevoTiempo,
+    });
+  };
 
 
   const marcarListo = async () => {
@@ -59,27 +84,32 @@ export const MultiplayerProvider = ({
 
       setPausaGlobalState(data?.pausa || false);
 
-      // 3) Actualizar estadoJuego según jugadores y listo
+    // 3) Estado de juego: si Firestore trae un estado concreto, lo respetamos
+    if (data?.estado) {
+      setEstadoJuego(data.estado);
+
+      // ── Si estamos en ReadyScreen y AMBOS marcaron listo, lanzamos el juego ──
+      if (
+        data.estado === 'listo' &&
+        data.listo?.p1 === true &&
+        data.listo?.p2 === true
+      ) {
+        // Solo un cliente debe disparar esto, elegimos p1
+        if (jugadorId === 'p1') {
+          actualizarSala(roomId, { estado: 'jugando' });
+        }
+      }
+    } else {
+      // fallback por presence + listo (si no tienes data.estado)
       const p1 = data?.jugadores?.p1 || false;
       const p2 = data?.jugadores?.p2 || false;
       const l1 = data?.listo?.p1    || false;
       const l2 = data?.listo?.p2    || false;
 
-      if (!p1 || !p2) {
-        setEstadoJuego('esperando');
-      } else if (!l1 || !l2) {
-        setEstadoJuego('listo');
-      } else {
-        setEstadoJuego('jugando');
-
-        console.log("game status updated");
-        if (data.estado !== 'jugando' && jugadorId === 'p1') {
-          // Solo p1 actualiza el estado para evitar conflictos
-          actualizarSala(roomId, { estado: 'jugando' });
-          console.log("room status updated");
-        }
-
-      }
+      if (!p1 || !p2) setEstadoJuego('esperando');
+      else if (!l1 || !l2) setEstadoJuego('listo');
+      else setEstadoJuego('jugando');
+    }
     });
 
     return () => unsubscribe();
@@ -87,9 +117,13 @@ export const MultiplayerProvider = ({
 
   // 4) Resetear tiempo cuando arranca el juego o cambia turno
   useEffect(() => {
-    if (estadoJuego === 'jugando' && typeof tiempoInicial === 'number') {
-      setTiempoRestante(tiempoInicial);
-    }
+  if (
+    estadoJuego === 'jugando' &&
+    estadoSala?.turno === jugadorId
+  ) {
+    const remote = estadoSala.tiemposRestantes?.[jugadorId] ?? tiempoInicial;
+    setTiempoRestante(remote);
+  }
   }, [estadoJuego, tiempoInicial]);
 
   // 5) Decrementar tiempo cada segundo SI es mi turno
@@ -97,24 +131,16 @@ export const MultiplayerProvider = ({
   useEffect(() => {
     if (estadoJuego !== 'jugando' || !esMiTurno) return;
 
-    const timer = setInterval(() => {
-      setTiempoRestante((t) => {
-        const nuevoTiempo = t <= 1 ? 0 : t - 1;
-
-        // Actualizar tiempo restante del jugador en turno en Firestore
-        actualizarSala(roomId, {
-          [`tiemposRestantes.${jugadorId}`]: nuevoTiempo
+      const timer = setInterval(() => {
+        setTiempoRestante((t) => {
+          const next = t <= 1 ? 0 : t - 1;
+          if (next === 0) {
+            clearInterval(timer);
+            responder('pasado').then(() => pasarTurno());
+          }
+          return next;
         });
-
-        // ⏱️ Si llega a 0, se pasa el turno
-        if (nuevoTiempo === 0) {
-          clearInterval(timer);
-          responder('pasado').then(() => pasarTurno());
-        }
-
-        return nuevoTiempo;
-      });
-    }, 1000);
+      }, 1000);
 
     return () => clearInterval(timer);
   }, [estadoJuego, esMiTurno]);
@@ -148,10 +174,15 @@ export const MultiplayerProvider = ({
     });
   };
 
-  const pasarTurno = async () => {
-    const next = estadoSala.turno === 'p1' ? 'p2' : 'p1';
-    await actualizarSala(roomId, { turno: next });
-  };
+ const pasarTurno = async () => {
+   const current = jugadorId;
+   const next    = estadoSala.turno === 'p1' ? 'p2' : 'p1';
+   await actualizarSala(roomId, {
+     // guardo tu tiempo final antes de ceder
+     [`tiemposRestantes.${current}`]: tiempoRestante,
+     turno: next
+   });
+ };
 
   return (
     <MultiplayerContext.Provider
@@ -159,17 +190,18 @@ export const MultiplayerProvider = ({
         estadoSala,
         cargando,
         estadoJuego,
+        iniciarJuego,
 
         // temporizador
         tiempoInicial,
-        setTiempoInicial,
-        tiempoRestante : tiempoRestanteCompartido,
+        setTiempoInicial: actualizarTiempoInicial,
+        tiempoRestante: esMiTurno ? tiempoRestante : tiempoRestanteCompartido,
 
         // turno y control
         esMiTurno,
         soyElControlador,
         pausaGlobal,
-        
+
         // datos rosco
         preguntasPropias,
         preguntasDelOtro,

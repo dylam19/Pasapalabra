@@ -1,19 +1,37 @@
-import { useJuego } from '../context/JuegoContext';
 import React, { useState } from 'react';
 
 
-const EndMessage = ({ preguntas: preguntasProp }) => {
-  const { preguntas: preguntasJuego, startGame } = useJuego();
-  const preguntas = preguntasProp || preguntasJuego;
+const EndMessage = ({ preguntas = [], puntajes }) => {
+  // Si recibimos puntajes, mostramos resultados antes de los pendientes
+  const mostrarResultados = Boolean(puntajes);
 
-  const pendientes = preguntas.filter((p) => p.estado === 'pendiente' || p.estado === 'pasado');
+
+
+  const pendientes = preguntas.filter(
+    (p) => p.estado === 'pendiente' || p.estado === 'pasado'
+  );
+
   const total = pendientes.length;
   const totalPages = total;
+
   const [page, setPage] = useState(0);
+
+  const renderResultados = () => {
+    if (mostrarResultados) {
+      return (
+        <div className="bg-darkBlue rounded-2xl p-6 shadow-xl">
+          <h3 className="text-2xl mb-2">Resultados</h3>
+          <p>Jugador 1: {puntajes.p1}</p>
+          <p>Jugador 2: {puntajes.p2}</p>
+        </div>
+      );
+    }
+  }
 
   if (total === 0) {
     return (
       <div className="flex flex-col justify-between h-full p-6 bg-darkBlue rounded-lg 2x1 text-white select-none">
+        {renderResultados()}
         <div>
           <h2 className="text-2xl font-bold text-center mb-2">
             ¡Juego Finalizado!
@@ -31,34 +49,25 @@ const EndMessage = ({ preguntas: preguntasProp }) => {
 
   return (
     <div className="flex flex-col justify-between h-full p-6 bg-transparent text-white">
-            {/* 1) Header */}
+      {/* 1) Header */}
       <div>
         <h2 className="text-2xl font-bold text-center mb-2 select-none">
           ¡Juego Finalizado!
         </h2>
       </div>
-
+      {renderResultados()}
       {/* 2) Contenido central: letra, palabra y definición */}
-<div className="flex-1 flex items-center justify-center">
-  <div
-    className="
-      bg-darkBlue rounded-lg p-6
-      max-w-lg w-full
-      text-center
-      h-56            /* altura fija */
-      flex flex-col justify-center
-      overflow-auto   /* scroll si definición muy larga */
-    "
-  >
-    <span className="block text-sm text-gray-400 mb-1 select-none">
-      {modo === 'inicia'
-          ? `Letra ${letra.toUpperCase()}`
-          : `Contiene ${letra.toUpperCase()}`}
-    </span>
-    <h3 className="text-2xl font-bold mb-2">{palabra}</h3>
-    <p className="text-base leading-relaxed">{definicion}</p>
-  </div>
-</div>
+      <div className="flex-1 flex items-center justify-center">
+        <div className="bg-darkBlue rounded-lg p-6 max-w-lg w-full text-center h-56 flex flex-col justify-center overflow-auto">
+          <span className="block text-sm text-gray-400 mb-1 select-none">
+            {modo === 'inicia'
+              ? `Letra ${letra.toUpperCase()}`
+              : `Contiene ${letra.toUpperCase()}`}
+          </span>
+          <h3 className="text-2xl font-bold mb-2">{palabra}</h3>
+          <p className="text-base leading-relaxed">{definicion}</p>
+        </div>
+      </div>
 
 
       {/* 3) Navegación + Nuevo Rosco al pie */}
@@ -80,6 +89,7 @@ const EndMessage = ({ preguntas: preguntasProp }) => {
           >
             Siguiente »
           </button>
+
         </div>
       </div>
     </div>

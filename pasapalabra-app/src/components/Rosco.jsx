@@ -2,7 +2,7 @@
 import React from 'react';
 import { useJuego } from '../context/JuegoContext';
 
-const Rosco = ({ preguntas: preguntasProp, indiceActual: indiceProp, started: startedProp }) => {
+const Rosco = ({ preguntas: preguntasProp, indiceActual: indiceProp, started: startedProp, player = 'default' }) => {
   let juego;
   try {
     juego = useJuego?.();
@@ -19,6 +19,15 @@ const Rosco = ({ preguntas: preguntasProp, indiceActual: indiceProp, started: st
   const center = size / 2;
   const radius = 180;
   const circleR = 20;
+
+  // ── define el fill del círculo central según el jugador ────────────────
+  const centerFill =
+    player === 'p1'
+      ? 'url(#roscoGradientDarkBlue)'
+      : player === 'p2'
+      ? 'url(#roscoGradientOrange)'
+      : 'url(#roscoGradientPurple)';  // default si no pasás player
+
 
   return (
     <div className="mx-auto w-full max-w-[90vw] sm:max-w-sm md:max-w-md lg:max-w-lg aspect-square">
@@ -48,10 +57,20 @@ const Rosco = ({ preguntas: preguntasProp, indiceActual: indiceProp, started: st
             <stop offset="0%" stopColor="#DA0924" />
             <stop offset="100%" stopColor="#B30011" />
           </linearGradient>
-
+          
           <linearGradient id="roscoGradientPurple" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="#8B5CF6" />
             <stop offset="100%" stopColor="#7b54d6ff" />
+          </linearGradient>
+
+          <linearGradient id="roscoGradientDarkBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#17144A" />
+            <stop offset="100%" stopColor="#151243" />
+          </linearGradient>
+          
+          <linearGradient id="roscoGradientOrange" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#CC6F23" />
+            <stop offset="100%" stopColor="#AF4A1F" />
           </linearGradient>
         </defs>
 
@@ -89,7 +108,14 @@ const Rosco = ({ preguntas: preguntasProp, indiceActual: indiceProp, started: st
           );
         })}
 
-        <circle cx={center} cy={center} r={24} stroke="#686674B0" strokeWidth={2} fill="url(#roscoGradientPurple)" />
+        <circle
+          cx={center}
+          cy={center}
+          r={24}
+          stroke="#686674B0"
+          strokeWidth={2}
+          fill={centerFill}
+        />
         <text x={center} y={center + 6} textAnchor="middle" fontSize="22"></text>
       </svg>
     </div>

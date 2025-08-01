@@ -21,16 +21,45 @@ export const crearSala = async (roomId) => {
   const preguntas_p1 = generarRoscoDesdeJSON();
   const preguntas_p2 = generarRoscoDesdeJSON();
 
+  const DEFAULT_TIME = 150;
   await setDoc(salaRef, {
     turno: 'p1',
     preguntas_p1,
     preguntas_p2,
     puntajes: { p1: 0, p2: 0 },
-
-    jugadores: { p1: true, p2: false },  // un solo campo jugadores
-    listo:    { p1: false, p2: false },  // campo listo para confirmación
-
+    jugadores: { p1: true, p2: false },
+    listo:    { p1: false, p2: false },
+    tiempos: { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+    tiemposRestantes: { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
     creada: serverTimestamp()
+});
+};
+
+ export const reiniciarSala = async (roomId) => {
+   const salaRef = doc(db, SALAS_COLLECTION, roomId);
+   const preguntas_p1 = generarRoscoDesdeJSON();
+   const preguntas_p2 = generarRoscoDesdeJSON();
+   const DEFAULT_TIME = 150;
+
+   await updateDoc(salaRef, {
+     preguntas_p1,
+     preguntas_p2,
+     "puntajes.p1" : 0,
+     "puntajes.p2" : 0,
+     "listo.p1" : false,
+     "listo.p2" : false,
+     tiempos:           { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+     tiemposRestantes:  { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+     turno:             'p1',
+     estado:            'listo',   // ← arrancamos directo la partida
+   });
+ };
+
+export const setTiempoInicial = async (roomId, jugador, nuevoTiempo) => {
+  const salaRef = doc(db, SALAS_COLLECTION, roomId);
+  await updateDoc(salaRef, {
+    [`tiempos.${jugador}`]: nuevoTiempo,
+    [`tiemposRestantes.${jugador}`]: nuevoTiempo
   });
 };
 
