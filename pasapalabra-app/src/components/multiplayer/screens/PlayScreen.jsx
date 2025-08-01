@@ -4,7 +4,7 @@ import Rosco from '../../Rosco';
 import Pregunta from '../../Pregunta';
 import Controles from '../../Controles';
 import StatsMultiplayer from '../StatsMultiplayer';
-import { useMultiplayer } from '../../context/MultiplayerContext';
+import { useMultiplayer } from '../../../context/MultiplayerContext';
 
 
 export default function PlayScreen({
