@@ -24,7 +24,7 @@ export const MultiplayerProvider = ({
   const [estadoSala, setEstadoSala]       = useState(null);
   const [cargando, setCargando]           = useState(true);
   const [estadoJuego, setEstadoJuego]     = useState('esperando'); // 'esperando' | 'listo' | 'jugando'
-  const [tiempoInicial, setTiempoInicial] = useState(10);
+  const [tiempoInicial, setTiempoInicial] = useState(150);
   const [tiempoRestante, setTiempoRestante] = useState(10);
 
   // 1) Avisar presencia al entrar

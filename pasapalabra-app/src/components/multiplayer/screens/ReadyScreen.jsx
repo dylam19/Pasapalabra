@@ -21,7 +21,7 @@ export default function ReadyScreen({
         {/* Columna izquierda: Rosco + Stats (modo clásico) */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl flex flex-col">
           <div className="flex-1">
-            <Rosco />
+            <Rosco preguntas={preguntasPropias} />
           </div>
           <div className="mt-4">
             {/* editable=true fuerza slider+settings */}

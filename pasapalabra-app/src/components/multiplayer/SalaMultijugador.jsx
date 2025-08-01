@@ -2,7 +2,7 @@
 import React from 'react';
 import { useParams } from 'react-router-dom';
 import { MultiplayerProvider, useMultiplayer } from '../../context/MultiplayerContext';
-import WaitingScreen from '../multiplayer/screens/WaitingScreen';     // puedes dejarla inline o crearla
+import WaitingScreen from '../multiplayer/screens/WaitingScreen';
 import ReadyScreen   from '../multiplayer/screens/ReadyScreen';
 import PlayScreen    from '../multiplayer/screens/PlayScreen';
 import EndScreen from '../multiplayer/screens/EndScreen';
