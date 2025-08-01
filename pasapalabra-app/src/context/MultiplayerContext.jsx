@@ -28,6 +28,8 @@ export const MultiplayerProvider = ({
   const [tiempoInicial, setTiempoInicial] = useState(150);
   const [tiempoRestante, setTiempoRestante] = useState(10);
   const tiempoRestanteCompartido = estadoSala?.tiemposRestantes?.[estadoSala?.turno] ?? tiempoRestante;
+  const [pausaGlobal, setPausaGlobalState] = useState(false);
+
 
   const marcarListo = async () => {
     try {
@@ -55,6 +57,8 @@ export const MultiplayerProvider = ({
       setEstadoSala(data);
       setCargando(false);
 
+      setPausaGlobalState(data?.pausa || false);
+      
       // 3) Actualizar estadoJuego según jugadores y listo
       const p1 = data?.jugadores?.p1 || false;
       const p2 = data?.jugadores?.p2 || false;
@@ -164,6 +168,7 @@ export const MultiplayerProvider = ({
         // turno y control
         esMiTurno,
         soyElControlador,
+        setPausaGlobal: (estado) => setPausaGlobal(roomId, estado),
 
         // datos rosco
         preguntasPropias,

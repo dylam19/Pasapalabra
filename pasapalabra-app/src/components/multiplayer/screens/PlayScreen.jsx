@@ -6,6 +6,7 @@ import Controles from '../../Controles';
 import StatsMultiplayer from '../StatsMultiplayer';
 import { useMultiplayer } from '../../../context/MultiplayerContext';
 
+
 export default function PlayScreen({
   preguntasPropias,
   preguntaActual,
@@ -18,7 +19,7 @@ export default function PlayScreen({
   const [cambiandoTurno, setCambiandoTurno] = useState(false);
   const [pausaVisible, setPausaVisible] = useState(false);
 
-  const { estadoSala } = useMultiplayer();
+  const { estadoSala, pausaGlobal, setPausaGlobal } = useMultiplayer();
 
   const jugadorEnTurno = estadoSala.turno;
   const tiempoInicialTurno = estadoSala?.tiempos?.[jugadorEnTurno] ?? 150;
@@ -63,37 +64,35 @@ export default function PlayScreen({
         {/* Pregunta + Controles */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
 
-          {pausaVisible && (
-            <div className="text-center text-yellow-300 text-xl font-semibold mb-4 animate-pulse">
-              Cambiando de turno...
-            </div>
-          )}
+        {pausaGlobal && (
+          <div className="text-center text-yellow-300 text-xl font-semibold mb-4 animate-pulse">
+            Cambiando de turno...
+          </div>
+        )}
 
-          {/* OCULTAR PREGUNTA DURANTE LA PAUSA */}
-          {!pausaVisible && (
-            <>
-              <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
+        {/* Ocultar pregunta si hay pausa global */}
+        {!pausaGlobal && (
+          <>
+            <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
+            {soyElControlador && (
+              <Controles
+                onResponder={(tipo) => {
+                  responder(tipo);
 
-              {soyElControlador && !cambiandoTurno && (
-                <Controles
-                  onResponder={(tipo) => {
-                    responder(tipo);
+                  if (tipo !== 'correcto') {
+                    setPausaGlobal(true);
 
-                    if (tipo !== 'correcto') {
-                      setCambiandoTurno(true);
-                      setPausaVisible(true);
+                    setTimeout(() => {
+                      setPausaGlobal(false);
+                      pasarTurno();
+                    }, 2000);
+                  }
+                }}
+              />
+            )}
+          </>
+        )}
 
-                      setTimeout(() => {
-                        setPausaVisible(false);
-                        pasarTurno();
-                        setCambiandoTurno(false);
-                      }, 2000);
-                    }
-                  }}
-                />
-              )}
-            </>
-          )}
         </div>
 
       </div>

@@ -12,6 +12,10 @@ import { generarRoscoDesdeJSON } from '../utils/RoscoGenerator';
 
 const SALAS_COLLECTION = 'salas';
 
+export const setPausaGlobal = async (roomId, enPausa) => {
+  await actualizarSala(roomId, { pausa: enPausa });
+};
+
 export const crearSala = async (roomId) => {
   const salaRef = doc(db, SALAS_COLLECTION, roomId);
   const preguntas_p1 = generarRoscoDesdeJSON();
@@ -50,6 +54,7 @@ export const actualizarSala = async (roomId, data) => {
 
 export const escucharSala = (roomId, callback) => {
   const salaRef = doc(db, SALAS_COLLECTION, roomId);
+
   return onSnapshot(salaRef, (docSnap) => {
     if (docSnap.exists()) {
       callback(docSnap.data());
@@ -57,4 +62,5 @@ export const escucharSala = (roomId, callback) => {
       console.warn('La sala no existe');
     }
   });
+
 };
