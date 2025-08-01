@@ -4,11 +4,17 @@ import { useJuego } from '../context/JuegoContext';
 import TiempoSlider from './TiempoSlider';
 
 const Stats = ({
+  // Props que vienen de multiplayer (cuando las pasas)
   tiempoRestante: tiempoExt,
   tiempoInicial: tiempoInicialExt,
   puntaje: puntajeExt,
-  editable = true
+  // Para multijugador:
+  isTimerActive = true,
+  onExpire = () => {},
+  // En clásico sigue siendo true para mostrar slider+botón
+  editable = true,
 }) => {
+  // Contexto clásico
   const {
     tiempoRestante,
     tiempoInicial,
@@ -17,31 +23,45 @@ const Stats = ({
     started,
   } = useJuego();
 
+  // Número de aciertos: o viene por prop, o lo calculo desde el contexto
   const correctas =
-    puntajeExt ?? preguntas.filter((p) => p.estado === 'correcto').length;
+    puntajeExt ??
+    preguntas.filter((p) => p.estado === 'correcto').length;
 
+  // Parámetros del círculo
   const size = 90;
   const center = size / 2;
   const radius = 36;
   const strokeWidth = 4;
 
-  const minTime = 60;
+  const minTime = 30;
   const maxTime = 400;
 
+  // Tiempo de base (configurado) y actual
   const tiempoBase = tiempoInicialExt ?? tiempoInicial;
   const tiempoActual = tiempoExt ?? tiempoRestante;
 
-  const fraction = started ? tiempoActual / tiempoBase : 1;
+  // Fracción para el dashoffset
+  const fraction = started || tiempoExt != null
+    ? tiempoActual / tiempoBase
+    : 1;
   const offset = (1 - fraction) * 2 * Math.PI * radius;
 
+  // Estado local para el botón de editar
   const [editing, setEditing] = useState(false);
   const wrapperRef = useRef(null);
 
+  // Cierro el editor al iniciar el clásico
   useEffect(() => {
-    if (started) {
-      setEditing(false);
-    }
+    if (started) setEditing(false);
   }, [started]);
+
+  // En multijugador: si el timer está activo y llega a cero, llamo a onExpire()
+  useEffect(() => {
+    if (tiempoExt != null && isTimerActive && tiempoActual === 0) {
+      onExpire();
+    }
+  }, [tiempoExt, tiempoActual, isTimerActive, onExpire]);
 
   return (
     <div
@@ -94,7 +114,7 @@ const Stats = ({
           </text>
         </svg>
 
-        {/* SLIDER */}
+        {/* SLIDER sólo en modo clásico (editable & no started) */}
         {editable && !started && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
             <TiempoSlider
@@ -107,7 +127,7 @@ const Stats = ({
         )}
       </div>
 
-      {/* BOTÓN DE AJUSTE */}
+      {/* BOTÓN DE AJUSTE sólo en clásico */}
       <div style={{ justifySelf: 'center' }}>
         {editable && !started && (
           <button
@@ -136,14 +156,7 @@ const Stats = ({
             </filter>
           </defs>
           <circle cx={center} cy={center} r={radius} fill="url(#counterGradient)" />
-          <circle
-            cx={center}
-            cy={center}
-            r={radius}
-            fill="none"
-            stroke="#534C6FB0"
-            strokeWidth={strokeWidth}
-          />
+          <circle cx={center} cy={center} r={radius} fill="none" stroke="#534C6FB0" strokeWidth={strokeWidth} />
           <text
             x={center}
             y={center}

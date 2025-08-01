@@ -7,6 +7,8 @@ import Pregunta from '../Pregunta';
 import Controles from '../Controles';
 import Stats from '../Stats';
 import MultiplayerEndScreen from './MultiplayerEndScreen';
+import TiempoSlider from '../TiempoSlider';   // importe directo
+
 const VistaDelJugador = () => {
   const {
     estadoSala,
@@ -20,10 +22,11 @@ const VistaDelJugador = () => {
     responder,
     pasarTurno,
     puntajePropio,
+    tiempoInicial,
+    tiempoRestante,
+    setTiempoInicial,
+    marcarListo,
   } = useMultiplayer();
-
-    console.log('estadoJuego:', estadoJuego, 'jugadores:', estadoSala?.jugadores);
-
 
   if (cargando || !estadoSala) {
     return <div className="text-white text-center mt-10">Cargando sala...</div>;
@@ -38,72 +41,76 @@ const VistaDelJugador = () => {
   }
 
   if (estadoJuego === 'listo') {
-  // ambos conectados, pero todavía no confirman
-  return (
-    <div className="text-center mt-10 space-y-6">
-      <h2 className="text-white text-3xl">¡Ambos conectados!</h2>
-      {/* Aquí podemos mostrar el slider exacto de clásico */}
-      <Stats puntaje={0} editable={true} />
-
-      <button
-        className="bg-green-500 text-white px-6 py-2 rounded"
-        onClick={() =>
-          actualizarSala(roomId, {
-            [`listo.${jugadorId}`]: true
-          })
-        }
-      >
-        Estoy listo
-      </button>
-    </div>
-    );
-    }
-
-
-  const juegoFinalizado = () => {
-    if (!estadoSala?.preguntas_p1 || !estadoSala?.preguntas_p2) return false;
+    // Pre-juego: muestro el slider y el botón de “Estoy listo”
     return (
-      !estadoSala.preguntas_p1.some((p) => p.estado === 'pendiente' || p.estado === 'pasado') &&
-      !estadoSala.preguntas_p2.some((p) => p.estado === 'pendiente' || p.estado === 'pasado')
-    );
-  };
+      <div className="text-center mt-10 space-y-6">
+        <h2 className="text-white text-3xl">¡Ambos conectados!</h2>
 
-  if (juegoFinalizado()) {
-    return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
-  }
-
-  if (!preguntaActual) {
-    return (
-      <div className="text-white text-center mt-10">
-        <h2 className="text-3xl font-bold mb-2">Juego finalizado 🎉</h2>
-        <p>Puntajes:</p>
-        <p>Jugador 1: {estadoSala.puntajes.p1}</p>
-        <p>Jugador 2: {estadoSala.puntajes.p2}</p>
+        <div className="inline-flex items-center space-x-4">
+          <TiempoSlider
+            min={30}
+            max={400}
+            initialTime={tiempoInicial}
+            onChange={setTiempoInicial}
+          />
+          <button
+            className="p-3 bg-green-500 rounded-full shadow-lg"
+            onClick={marcarListo}
+            title="Estoy listo"
+          >
+          </button>
+        </div>
       </div>
     );
   }
 
+  // comprueba si ya acabó la partida (todas las preguntas respondidas)
+  const partidaTerminada = () => {
+    const { preguntas_p1 = [], preguntas_p2 = [] } = estadoSala;
+    return (
+      !preguntas_p1.some((p) => ['pendiente','pasado'].includes(p.estado)) &&
+      !preguntas_p2.some((p) => ['pendiente','pasado'].includes(p.estado))
+    );
+  };
+
+  if (partidaTerminada()) {
+    return <MultiplayerEndScreen puntajes={estadoSala.puntajes} />;
+  }
+
+  // Modo “jugando”
   return (
     <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
       <header className="text-center mb-4">
-        <h2 className="text-3xl font-bold">Sala: Multijugador</h2>
+        <h2 className="text-3xl font-bold">Sala Multijugador</h2>
         <p className="text-lg">
-          {esMiTurno ? 'Es tu turno para responder' : 'Te toca controlar al otro jugador'}
+          {esMiTurno ? 'Es tu turno' : 'Esperando la jugada del otro'}
         </p>
       </header>
 
       <div className="flex flex-col md:flex-row gap-6">
+        {/* Columna Rosco + Stats */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
           <Rosco preguntas={esMiTurno ? preguntasPropias : preguntasDelOtro} />
-          <Stats puntaje={puntajePropio} editable={false} />
+          <Stats
+            tiempoInicial={tiempoInicial}
+            tiempoRestante={tiempoRestante}
+            puntaje={puntajePropio}
+            editable={false}
+            isTimerActive={esMiTurno}
+            onExpire={pasarTurno}
+          />
         </div>
+
+        {/* Columna Pregunta + Controles */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl">
           <Pregunta pregunta={preguntaActual} mostrarPalabra={soyElControlador} />
           {soyElControlador && (
             <Controles
               onResponder={(tipo) => {
                 responder(tipo);
-                if (tipo !== 'correcto') pasarTurno();
+                if (tipo !== 'correcto') {
+                  pasarTurno();
+                }
               }}
             />
           )}
@@ -113,16 +120,11 @@ const VistaDelJugador = () => {
   );
 };
 
-  const SalaMultijugador = () => {
+export default function SalaMultijugador() {
   const { roomId, jugadorId } = useParams();
-
-    return (
-        <MultiplayerProvider roomId={roomId} jugadorId={jugadorId}>
-        <VistaDelJugador />
-        </MultiplayerProvider>
-        );
-    };
-    
-
-
-export default SalaMultijugador;
+  return (
+    <MultiplayerProvider roomId={roomId} jugadorId={jugadorId}>
+      <VistaDelJugador />
+    </MultiplayerProvider>
+  );
+}
