@@ -19,6 +19,10 @@ export default function PlayScreen({
 }) {
 
   const { tiempoInicial, tiempoRestante, setTiempoInicial } = useMultiplayer();
+  const letraActual = preguntaActual?.letra;
+  const indiceActual = preguntasPropias.findIndex(p => p.letra === letraActual);
+  const preguntasEnJuego = estadoSala?.[`preguntas_${estadoSala?.turno}`] ?? [];
+
 
   return (
     <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
@@ -33,18 +37,21 @@ export default function PlayScreen({
         {/* Rosco + Stats */}
         <div className="flex-1 bg-darkBlue rounded-2xl p-4 shadow-xl flex flex-col">
           <div className="flex-1">
-            <Rosco preguntas={esMiTurno ? preguntasPropias : preguntasDelOtro} />
+            <Rosco  preguntas={preguntasEnJuego}
+                    indiceActual={indiceActual}
+                    started={true}
+             />
           </div>
           <div className="mt-4">
             <StatsMultiplayer
-            tiempoInicial={tiempoInicial}
-            tiempoRestante={tiempoRestante}
-            setTiempoInicial={setTiempoInicial}
-            preguntas={preguntasPropias}
-            started={true}
-            isTimerActive={esMiTurno}
-            onExpire={pasarTurno}
+              preguntas={preguntasEnJuego}
+              tiempoInicial={tiempoInicial}
+              tiempoRestante={tiempoRestante}
+              started={true}
+              isTimerActive={esMiTurno}
+              onExpire={pasarTurno}
             />
+
           </div>
         </div>
 
