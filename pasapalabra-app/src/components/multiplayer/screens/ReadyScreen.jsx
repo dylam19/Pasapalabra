@@ -1,7 +1,7 @@
 // src/components/multiplayer/ReadyScreen.jsx
 import React from 'react';
 import Rosco from '../../Rosco';
-import Stats from '../StatsMultiplayer';
+import StatsMultiplayer from '../StatsMultiplayer';
 
 export default function ReadyScreen({ 
   tiempoInicial,      // number: viene de Firestore
