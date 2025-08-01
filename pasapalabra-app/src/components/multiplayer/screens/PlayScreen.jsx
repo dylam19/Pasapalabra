@@ -4,6 +4,8 @@ import Rosco from '../../Rosco';
 import Pregunta from '../../Pregunta';
 import Controles from '../../Controles';
 import StatsMultiplayer from '../StatsMultiplayer';
+import { useMultiplayer } from '../../context/MultiplayerContext';
+
 
 export default function PlayScreen({
   preguntasPropias,
@@ -15,6 +17,9 @@ export default function PlayScreen({
   pasarTurno,
   puntajePropio,
 }) {
+
+  const { tiempoInicial, tiempoRestante, setTiempoInicial } = useMultiplayer();
+
   return (
     <div className="min-h-screen text-white p-4 bg-gradient-to-b from-[#EB0B92] to-[#4B57B0]">
       <header className="text-center mb-4">
