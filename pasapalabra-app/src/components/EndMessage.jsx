@@ -1,98 +1,155 @@
 import React, { useState } from 'react';
-
+import { ChevronUpIcon, ChevronDownIcon } from '@heroicons/react/24/solid';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const EndMessage = ({ preguntas = [], puntajes }) => {
-  // Si recibimos puntajes, mostramos resultados antes de los pendientes
   const mostrarResultados = Boolean(puntajes);
-
-
 
   const pendientes = preguntas.filter(
     (p) => p.estado === 'pendiente' || p.estado === 'pasado'
   );
 
   const total = pendientes.length;
-  const totalPages = total;
-
+  const totalPages = total - 1;
   const [page, setPage] = useState(0);
+  const [direction, setDirection] = useState(0); // -1 sube, +1 baja
 
-  const renderResultados = () => {
-    if (mostrarResultados) {
-      return (
-        <div className="bg-darkBlue rounded-2xl p-6 shadow-xl">
-          <h3 className="text-2xl mb-2">Resultados</h3>
-          <p>Jugador 1: {puntajes.p1}</p>
-          <p>Jugador 2: {puntajes.p2}</p>
-        </div>
-      );
-    }
-  }
+  const subir = () => {
+    setDirection(-1);
+    setPage((p) => Math.max(0, p - 1));
+  };
 
-  if (total === 0) {
+  const bajar = () => {
+    setDirection(1);
+    setPage((p) => Math.min(totalPages - 1, p + 1));
+  };
+
+  const capitalizeFirst = (text) =>
+    text.charAt(0).toUpperCase() + text.slice(1);
+
+  const renderPreguntaBase = (pregunta, idx, position) => {
+    const letter = pregunta?.letra?.toUpperCase() ?? '';
+    const palabra = pregunta?.palabra ?? '';
+    const definicion = pregunta?.definicion ?? '';
+
+    const borderClass =
+      position === 'top'
+        ? 'rounded-t-3xl'
+        : position === 'bottom'
+          ? 'rounded-b-3xl'
+          : '';
+
+    const borderClassLetter =
+      position === 'top'
+        ? 'rounded-tl-3xl'
+        : position === 'bottom'
+          ? 'rounded-bl-3xl'
+          : '';
+
     return (
-      <div className="flex flex-col justify-between h-full p-6 bg-darkBlue rounded-lg 2x1 text-white select-none">
-        {renderResultados()}
-        <div>
-          <h2 className="text-2xl font-bold text-center mb-2">
-            ¡Juego Finalizado!
-          </h2>
-          <p className="text-center font-bold text-green-300">
-            ¡Felicidades! No quedaron palabras pendientes.
-          </p>
+      <div key={`${position}-${idx}`} className="relative mb-1 flex items-center">
+        <div
+          className={`flex-1 min-h-23 flex overflow-hidden bg-gradient-to-br from-[#771179] to-[#59075C] shadow-lg ${borderClass}`}
+        >
+          {/* BLOQUE FIJO: LETRA */}
+          <div
+            className={`bg-gradient-to-br from-[#C3116B] to-[#9E0C55] w-20 flex items-center justify-center text-white text-5xl font-bold ${borderClassLetter}`}
+          >
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${palabra}-${position}`}
+                initial={{ opacity: 0, y: direction === 1 ? 50 : -50 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: direction === 1 ? -50 : 50 }}
+                transition={{ duration: 0.5 }}
+              >
+                <div>{letter}</div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
+
+          {/* BLOQUE ANIMADO: PALABRA + DEFINICIÓN */}
+          <div className="flex-1 p-2 text-white relative overflow-hidden">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={`${palabra}-${position}`}
+                initial={{ opacity: 1, y: direction === 1 ? 160 : -160 }}
+                animate={{ opacity: 1, y: 1 }}
+                exit={{ opacity: 1, y: direction === 1 ? -160 : 160 }}
+                transition={{ duration: 0.6 }}
+              >
+                <div className="text-sm">{capitalizeFirst(palabra)}</div>
+                <div className="text-white/80 leading-relaxed">{definicion}</div>
+              </motion.div>
+            </AnimatePresence>
+          </div>
         </div>
+
+        {/* Flechas */}
+        {position === 'top' && page > 0 && (
+          <button
+            onClick={subir}
+            className="chevron-button"
+            style={{
+              position: 'absolute',
+              right: '-0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              padding: '10px',
+              borderRadius: '9999px',
+              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
+              border: 'none',
+              zIndex: 999,
+              cursor: 'pointer',
+            }}
+          >
+            <ChevronUpIcon style={{ width: '20px', height: '20px', color: 'white' }} />
+          </button>
+        )}
+
+        {position === 'bottom' && page + 1 < totalPages && (
+          <button
+            onClick={bajar}
+            className="chevron-button"
+            style={{
+              position: 'absolute',
+              right: '-0.5rem',
+              top: '50%',
+              transform: 'translateY(-50%)',
+              padding: '10px',
+              borderRadius: '9999px',
+              boxShadow: '0px 4px 8px rgba(0, 0, 0, 0.3)',
+              border: 'none',
+              zIndex: 999,
+              cursor: 'pointer',
+            }}
+          >
+            <ChevronDownIcon style={{ width: '20px', height: '20px', color: 'white' }} />
+          </button>
+        )}
       </div>
     );
-  }
+  };
 
-  const { letra, palabra, definicion } = pendientes[page];
-  const modo = palabra.startsWith(letra.toLowerCase()) ? 'inicia' : 'contiene';
 
   return (
-    <div className="flex flex-col justify-between h-full p-6 bg-transparent text-white">
-      {/* 1) Header */}
+    <div className="flex flex-col justify-between h-full bg-transparent text-white relative">
+      {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-center mb-2 select-none">
+        <h2 className="text-2xl font-bold text-center mb-4 select-none">
           ¡Juego Finalizado!
         </h2>
       </div>
-      {renderResultados()}
-      {/* 2) Contenido central: letra, palabra y definición */}
-      <div className="flex-1 flex items-center justify-center">
-        <div className="bg-darkBlue rounded-lg p-6 max-w-lg w-full text-center h-56 flex flex-col justify-center overflow-auto">
-          <span className="block text-sm text-gray-400 mb-1 select-none">
-            {modo === 'inicia'
-              ? `Letra ${letra.toUpperCase()}`
-              : `Contiene ${letra.toUpperCase()}`}
-          </span>
-          <h3 className="text-2xl font-bold mb-2">{palabra}</h3>
-          <p className="text-base leading-relaxed">{definicion}</p>
-        </div>
-      </div>
 
-
-      {/* 3) Navegación + Nuevo Rosco al pie */}
-      <div>
-        {/* Prev / Next */}
-        <div className="flex justify-center items-center space-x-4 mb-4 m-6 select-none">
-          <button
-            onClick={() => setPage((p) => Math.max(0, p - 1))}
-            disabled={page === 0}
-            className="px-4 py-2 bg-orange-600 rounded disabled:opacity-50"
-          >
-            « Anterior
-          </button>
-          <span>{page + 1} / {totalPages}</span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}
-            disabled={page === totalPages - 1}
-            className="px-4 py-2 bg-orange-600 rounded disabled:opacity-50"
-          >
-            Siguiente »
-          </button>
-
-        </div>
+      {/* Contenido */}
+      <div className="flex-1">
+        <AnimatePresence mode="wait" initial={false}>
+          {renderPreguntaBase(pendientes[page], page, 'top')}
+          {renderPreguntaBase(pendientes[page + 1], page + 1, 'bottom')}
+        </AnimatePresence>
       </div>
     </div>
   );
 };
+
 export default EndMessage;

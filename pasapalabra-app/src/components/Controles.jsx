@@ -46,7 +46,7 @@ const Controles = ({ onResponder, disabled = false }) => {
           background: 'linear-gradient(45deg, #3EDB98 0%, #37C450 100%)',
           border: '3px solid #686674B0',
         }}
-        className={`text-white px-4 py-2 rounded shadow-xl transition ${disabledCls}`}
+        className={`text-white px-4 py-2 rounded shadow-xl rounded-xl transition ${disabledCls}`}
       >
         Correcto
       </button>
@@ -58,7 +58,7 @@ const Controles = ({ onResponder, disabled = false }) => {
           background: 'linear-gradient(45deg, #DA0924 0%, #B30011 100%)',
           border: '3px solid #686674B0',
         }}
-        className={`text-white px-4 py-2 rounded shadow-xl transition ${disabledCls}`}
+        className={`text-white px-4 py-2 rounded shadow-xl rounded-xl transition ${disabledCls}`}
       >
         Incorrecto
       </button>
@@ -70,7 +70,7 @@ const Controles = ({ onResponder, disabled = false }) => {
           background: 'linear-gradient(45deg, #D5C94E 0%, #D59B1F 100%)',
           border: '3px solid #686674B0',
         }}
-        className={`text-white px-4 py-2 rounded shadow-xl transition ${disabledCls}`}
+        className={`text-white px-4 py-2 rounded shadow-xl rounded-xl transition ${disabledCls}`}
       >
         Pasapalabra
       </button>

@@ -3,218 +3,245 @@ import React, {
   createContext,
   useContext,
   useEffect,
-  useState
+  useState,
+  useRef,
+  useCallback
 } from 'react';
 import {
   crearSala,
-  escucharSala,
-  actualizarSala,
   obtenerSala,
-  reiniciarSala,
-  setJugadorPresente
-} from '../services/firebaseGame';
+  escucharSala,
+  setPresencia,
+  onDisconnectPresencia,
+  marcarListo as marcarListoRT,
+  confirmarTurno as confirmarTurnoRT,
+  pasarTurno as pasarTurnoRT,
+  setTiempoInicial as setTiempoInicialRT,
+  responder as responderRT
+} from '../services/firebaseGameRTDB';
 
 const MultiplayerContext = createContext();
-
 export const useMultiplayer = () => useContext(MultiplayerContext);
 
-export const MultiplayerProvider = ({
-  roomId,
-  jugadorId,
-  children
-}) => {
-  const [estadoSala, setEstadoSala]       = useState(null);
-  const [cargando, setCargando]           = useState(true);
-  const [estadoJuego, setEstadoJuego]     = useState('esperando'); // 'esperando' | 'listo' | 'jugando'
-  const [tiempoInicial, setTiempoInicial] = useState(150);
-  const [tiempoRestante, setTiempoRestante] = useState(10);
-  const tiempoRestanteCompartido = estadoSala?.tiemposRestantes?.[estadoSala?.turno] ?? tiempoRestante;
-  const [pausaGlobal, setPausaGlobalState] = useState(false);
+export function MultiplayerProvider({ roomId, jugadorId, children }) {
+  // ─── Estados ─────────────────────────────────────────────────────────
+  const [sala, setSala] = useState(null);
+  const [cargando, setCargando] = useState(true);
+  const [estadoJuego, setEstadoJuego] = useState('esperando'); // 'esperando'|'listo'|'jugando'
 
-  /**
-   * Reinicia la sala para una nueva partida en el mismo roomId.
-   * Llama a crearSala, que sobrescribe el doc con nuevos rosco, puntajes y tiempos.
-   */
-  const iniciarJuego = async () => {
-    try {
-      await reiniciarSala(roomId);
-      console.log('[OK] Reiniciada partida en sala', roomId);
-    } catch (err) {
-      console.error('Error al reiniciar partida:', err);
-    }
-  };
+  // Timer
+  const [remaining, setRemaining] = useState(0);
+  const timerRef = useRef(null);
 
-  const actualizarTiempoInicial = async (nuevoTiempo) => {
-    // 1) React state
-    setTiempoInicial(nuevoTiempo);
+  // Desuscripción RTDB
+  const unsubRef = useRef(null);
 
-    // 2) Firestore: tiempos y tiemposRestantes
-    await actualizarSala(roomId, {
-      [`tiempos.${jugadorId}`]: nuevoTiempo,
-      [`tiemposRestantes.${jugadorId}`]: nuevoTiempo,
-    });
-  };
+  // Helpers
+  const esMiTurno = sala?.turno === jugadorId;
+  const soyElControlador = sala?.turno !== jugadorId;
+  const tiempoInicial = sala?.tiempos?.[jugadorId] ?? 150;
 
-
-  const marcarListo = async () => {
-    try {
-      await actualizarSala(roomId, {
-        [`listo.${jugadorId}`]: true,
-      });
-      console.log(`[OK] Jugador ${jugadorId} marcó listo`);
-    } catch (err) {
-      console.error('Error al marcar listo:', err);
-    }
-  };
-
-  // 1) Avisar presencia al entrar
+  // ─── 1) Setup sala + listener ────────────────────────────────────────
   useEffect(() => {
-    if (roomId && jugadorId) {
-      setJugadorPresente(roomId, jugadorId).catch(console.error);
+    if (!roomId || !jugadorId) return;
+    let canceled = false;
+
+    async function setup() {
+      // 1.1) Crear sala si no existe
+      const existing = await obtenerSala(roomId);
+      if (!existing) {
+        await crearSala(roomId);
+      }
+
+      // 1.2) Presencia + onDisconnect
+      await setPresencia(roomId, jugadorId);
+      onDisconnectPresencia(roomId, jugadorId);
+
+      // 1.3) Listener RTDB
+      unsubRef.current = escucharSala(roomId, data => {
+        if (canceled) return;
+        if (!data) return;
+
+        const preguntasMias = data[`preguntas_${jugadorId}`] || [];
+        const noHayPendientes = preguntasMias.every(p => p.estado !== 'pendiente');
+        const hayPasadas = preguntasMias.some(p => p.estado === 'pasado');
+
+        if (data.turno === jugadorId && noHayPendientes && !hayPasadas) {
+          console.log('[DEBUG] Jugador sin palabras pendientes ni pasadas, pasando turno automáticamente');
+          pasarTurnoRT(roomId, jugadorId, data.tiemposRestantes?.[jugadorId] ?? 0)
+            .catch(console.error);
+          return;
+        }
+
+        if (data.turno === jugadorId && noHayPendientes && hayPasadas) {
+          const nuevasPreguntas = preguntasMias.map(p =>
+            p.estado === 'pasado' ? { ...p, estado: 'pendiente' } : p
+          );
+
+          const updates = {};
+          updates[`/salas/${roomId}/preguntas_${jugadorId}`] = nuevasPreguntas;
+
+          import('firebase/database').then(({ getDatabase, ref, update }) => {
+            const db = getDatabase();
+            update(ref(db), updates).catch(console.error);
+          });
+        }
+
+        if (data.version && data.version !== sala?.version) {
+          console.log('[DEBUG] Nueva versión detectada, reafirmando presencia');
+          setPresencia(roomId, jugadorId);
+          onDisconnectPresencia(roomId, jugadorId);
+        }
+
+        // ── SKIP si este jugador no tiene tiempo y aún no confirmó ──
+        const miTiempo = data.tiemposRestantes?.[jugadorId] ?? 0;
+        if (data.turno === jugadorId && miTiempo === 0 && data.turnConfirmed === false) {
+          // Pasamos el turno de inmediato sin pedir confirmación
+          pasarTurnoRT(roomId, jugadorId, 0).catch(console.error);
+          return;
+        }
+        // Normalizar
+        const jugadores = data.jugadores || { p1: false, p2: false };
+        const listo = data.listo || { p1: false, p2: false };
+
+        // Calcular estadoJuego
+        const bothIn = jugadores.p1 && jugadores.p2;
+        const bothReady = listo.p1 && listo.p2;
+
+        if (!bothIn) setEstadoJuego('esperando');
+        else if (!bothReady) setEstadoJuego('listo');
+        else setEstadoJuego('jugando');
+
+        setSala(data);
+        setCargando(false);
+
+      });
     }
+
+    setup().catch(console.error);
+
+    return () => {
+      canceled = true;
+      if (unsubRef.current) unsubRef.current();
+      clearInterval(timerRef.current);
+    };
   }, [roomId, jugadorId]);
 
-  // 2) Escuchar la sala en Firebase
-  useEffect(() => {
-    if (!roomId) return;
-
-    const unsubscribe = escucharSala(roomId, (data) => {
-      setEstadoSala(data);
-      setCargando(false);
-
-      setPausaGlobalState(data?.pausa || false);
-
-    // 3) Estado de juego: si Firestore trae un estado concreto, lo respetamos
-    if (data?.estado) {
-      setEstadoJuego(data.estado);
-
-      // ── Si estamos en ReadyScreen y AMBOS marcaron listo, lanzamos el juego ──
-      if (
-        data.estado === 'listo' &&
-        data.listo?.p1 === true &&
-        data.listo?.p2 === true
-      ) {
-        // Solo un cliente debe disparar esto, elegimos p1
-        if (jugadorId === 'p1') {
-          actualizarSala(roomId, { estado: 'jugando' });
-        }
-      }
-    } else {
-      // fallback por presence + listo (si no tienes data.estado)
-      const p1 = data?.jugadores?.p1 || false;
-      const p2 = data?.jugadores?.p2 || false;
-      const l1 = data?.listo?.p1    || false;
-      const l2 = data?.listo?.p2    || false;
-
-      if (!p1 || !p2) setEstadoJuego('esperando');
-      else if (!l1 || !l2) setEstadoJuego('listo');
-      else setEstadoJuego('jugando');
-    }
-    });
-
-    return () => unsubscribe();
-  }, [roomId]);
-
-  // 4) Resetear tiempo cuando arranca el juego o cambia turno
-  useEffect(() => {
-  if (
-    estadoJuego === 'jugando' &&
-    estadoSala?.turno === jugadorId
-  ) {
-    const remote = estadoSala.tiemposRestantes?.[jugadorId] ?? tiempoInicial;
-    setTiempoRestante(remote);
-  }
-  }, [estadoJuego, tiempoInicial]);
-
-  // 5) Decrementar tiempo cada segundo SI es mi turno
-  const esMiTurno = estadoSala?.turno === jugadorId;
-  useEffect(() => {
-    if (estadoJuego !== 'jugando' || !esMiTurno) return;
-
-      const timer = setInterval(() => {
-        setTiempoRestante((t) => {
-          const next = t <= 1 ? 0 : t - 1;
-          if (next === 0) {
-            clearInterval(timer);
-            responder('pasado').then(() => pasarTurno());
-          }
-          return next;
-        });
-      }, 1000);
-
-    return () => clearInterval(timer);
-  }, [estadoJuego, esMiTurno]);
-
-  // 6) Resto de variables y funciones de juego
-  const soyElControlador = estadoSala?.turno !== jugadorId;
-  const preguntasPropias = estadoSala?.[`preguntas_${jugadorId}`] || [];
-  const preguntasDelOtro = estadoSala?.[`preguntas_${estadoSala?.turno}`] || [];
-  const puntajePropio    = estadoSala?.puntajes?.[jugadorId]    ?? 0;
-  const preguntaActual   = estadoSala
-    ? estadoSala[`preguntas_${estadoSala.turno}`]?.find(p => p.estado === 'pendiente')
-    : null;
-
-  const responder = async (nuevoEstado) => {
-    if (!estadoSala || !preguntaActual) return;
-
-    const clave = `preguntas_${estadoSala.turno}`;
-    const arr   = [...estadoSala[clave]];
-    const idx   = arr.findIndex(p => p.letra === preguntaActual.letra);
-    if (idx === -1) return;
-
-    arr[idx] = { ...arr[idx], estado: nuevoEstado };
-    const nuevosPuntajes = { ...estadoSala.puntajes };
-    if (nuevoEstado === 'correcto') {
-      nuevosPuntajes[estadoSala.turno] = (nuevosPuntajes[estadoSala.turno] || 0) + 1;
-    }
-
-    await actualizarSala(roomId, {
-      [clave]: arr,
-      puntajes: nuevosPuntajes
-    });
+  const calcularRemaining = () => {
+    const end = sala?.turnEndAt;
+    if (!end) return remaining; // fallback
+    return Math.max(Math.ceil((end - Date.now()) / 1000), 0);
   };
 
- const pasarTurno = async () => {
-   const current = jugadorId;
-   const next    = estadoSala.turno === 'p1' ? 'p2' : 'p1';
-   await actualizarSala(roomId, {
-     // guardo tu tiempo final antes de ceder
-     [`tiemposRestantes.${current}`]: tiempoRestante,
-     turno: next
-   });
- };
+  const reiniciarSala = useCallback(async () => {
+    const nombresAnteriores = sala?.nombres || {};
+    await crearSala(roomId, nombresAnteriores, jugadorId);
+    await setPresencia(roomId, jugadorId);
+    onDisconnectPresencia(roomId, jugadorId);
+  }, [roomId, jugadorId, sala]);
+  
+
+  // ─── 2) Timer del turno ───────────────────────────────────────────────
+  useEffect(() => {
+    clearInterval(timerRef.current);
+    if (!sala) return;
+
+    const turnEnd = sala.turnEndAt;
+    const baseRem = sala.tiemposRestantes?.[sala.turno] ?? tiempoInicial;
+
+    // Solo bloquear timer si el jugador ACTIVO no ha confirmado
+    if ((esMiTurno && !sala.turnConfirmed) || !turnEnd) {
+      setRemaining(baseRem);
+      return;
+    }
+
+    timerRef.current = setInterval(() => {
+      const rem = Math.max(Math.ceil((turnEnd - Date.now()) / 1000), 0);
+      setRemaining(rem);
+
+      if (rem === 0 && esMiTurno) {
+        clearInterval(timerRef.current);
+        pasarTurnoRT(roomId, sala.turno, rem).catch(console.error);
+      }
+    }, 500);
+
+    return () => clearInterval(timerRef.current);
+  }, [sala, esMiTurno, tiempoInicial, roomId]);
+
+  // ─── 3) Acciones ──────────────────────────────────────────────────────
+  const marcarListo = useCallback(() => {
+    return marcarListoRT(roomId, jugadorId);
+  }, [roomId, jugadorId]);
+
+  const confirmarTurno = useCallback(() => {
+    const durSec = sala?.tiemposRestantes?.[jugadorId] ?? tiempoInicial;
+    const durMs = durSec * 1000;
+    return confirmarTurnoRT(roomId, durMs);
+  }, [roomId, sala, jugadorId, tiempoInicial]);
+
+  const pasarTurno = useCallback(() => {
+    const rem = calcularRemaining();
+
+    console.log('[DEBUG] tiemposRestantes:', sala.tiemposRestantes);
+    console.log('[DEBUG] tiempo base usado:', rem);
+
+    return pasarTurnoRT(roomId, sala.turno, rem);
+  }, [roomId, sala, remaining]);
+
+  const responder = useCallback((tipo) => {
+    return responderRT(roomId, sala.turno, tipo);
+  }, [roomId, sala]);
+
+  const iniciarJuego = useCallback(() => {
+    return crearSala(roomId);
+  }, [roomId]);
+
+  const setTiempoInicial = useCallback((nuevo) => {
+    const sec = Number(nuevo) || 150;
+    return setTiempoInicialRT(roomId, jugadorId, sec);
+  }, [roomId, jugadorId]);
+
+  // ─── 4) Datos para la UI ──────────────────────────────────────────────
+  const preguntasPropias = sala?.[`preguntas_${jugadorId}`] || [];
+  const preguntasDelOtro = sala?.[`preguntas_${sala?.turno}`] || [];
+  let preguntaActual =
+    preguntasDelOtro.find(p => p.estado === 'pendiente') ||
+    preguntasDelOtro.find(p => p.estado === 'pasado') || null;
+  const puntajePropio = sala?.puntajes?.[jugadorId] || 0;
 
   return (
-    <MultiplayerContext.Provider
-      value={{
-        estadoSala,
-        cargando,
-        estadoJuego,
-        iniciarJuego,
+    <MultiplayerContext.Provider value={{
+      // Sala y estado
+      estadoSala: sala,
+      cargando,
+      estadoJuego,
+      iniciarJuego,
+      reiniciarSala,
 
-        // temporizador
-        tiempoInicial,
-        setTiempoInicial: actualizarTiempoInicial,
-        tiempoRestante: esMiTurno ? tiempoRestante : tiempoRestanteCompartido,
+      // Timer
+      tiempoInicial,
+      setTiempoInicial,
+      tiempoRestante: remaining,
 
-        // turno y control
-        esMiTurno,
-        soyElControlador,
-        pausaGlobal,
+      // Turnos
+      esMiTurno,
+      soyElControlador,
+      marcarListo,
+      confirmarTurno,
+      pasarTurno,
 
-        // datos rosco
-        preguntasPropias,
-        preguntasDelOtro,
-        preguntaActual,
-        puntajePropio,
+      // Confirmación de turno
+      turnConfirmed: sala?.turnConfirmed ?? false,
 
-        // acciones
-        responder,
-        marcarListo,
-        pasarTurno
-      }}
-    >
+      // Juego
+      jugadorId,
+      preguntasPropias,
+      preguntasDelOtro,
+      preguntaActual,
+      responder,
+      puntajePropio,
+    }}>
       {children}
     </MultiplayerContext.Provider>
   );
-};
+}

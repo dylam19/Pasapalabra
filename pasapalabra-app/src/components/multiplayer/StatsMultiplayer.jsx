@@ -4,16 +4,40 @@ import TiempoSlider from './../TiempoSlider';
 
 const StatsMultiplayer = ({
   // Datos de multijugador
+  player = 'default',
   tiempoInicial,
   tiempoRestante,
   setTiempoInicial,
   preguntas = [],
   started = false,
   isTimerActive = true,
-  onExpire = () => {},
+  allowEdit = false,      // ← nuevo: controla edición
+  onExpire = () => { },
 }) => {
+
+  const counterGradient =
+    player === 'p1'
+      ? 'url(#counterGradientPlayer1)'
+      : player === 'p2'
+        ? 'url(#counterGradientPlayer2)'
+        : 'url(#counterGradientPlayer1)';  // default si no pasás player
+
+
+
   // Número de aciertos
   const correctas = preguntas.filter((p) => p.estado === 'correcto').length;
+
+  // Validar tiempos como números
+  const tiInit = Number(tiempoInicial) || 0;
+  const tiRem = Number(tiempoRestante) || 0;
+
+  // Si no hay tiempo válido, mostramos un fallback o nada
+  if (tiInit <= 0) {
+    return <div>Timer no disponible</div>;
+  }
+
+  // 3) Definimos displayTime (¡no te olvides de esto!)
+  const displayTime = started ? tiRem : tiInit;
 
   // Parámetros SVG
   const size = 90;
@@ -23,7 +47,7 @@ const StatsMultiplayer = ({
 
   // Límites del slider
   const minTime = 1;
-  const maxTime = 20;
+  const maxTime = 40;
 
   // Parámetros del anillo exterior
   const outerRadius = radius;
@@ -31,10 +55,11 @@ const StatsMultiplayer = ({
   const outerCirc = 2 * Math.PI * outerRadius;
 
   // Progreso del timer
-  const displayTime = started ? tiempoRestante : tiempoInicial;
+  // Evitar división por 0
   const fraction = started
-    ? tiempoRestante / tiempoInicial
+    ? tiRem / tiInit
     : 1;
+  const safeFraction = isFinite(fraction) ? fraction : 1;
   const offset = (1 - fraction) * 2 * Math.PI * radius;
 
   // Posición del handle
@@ -134,7 +159,7 @@ const StatsMultiplayer = ({
             fill="none"
             stroke="#686674B0" strokeWidth={strokeWidth}
             strokeDasharray={2 * Math.PI * radius}
-            strokeDashoffset={offset}
+            strokeDashoffset={String(offset)}
             transform={`rotate(-90 ${center} ${center})`}
             style={{ transition: 'stroke-dashoffset 1s linear' }}
           />
@@ -151,7 +176,7 @@ const StatsMultiplayer = ({
           </text>
 
           {/* Slider radial */}
-          {editing && !started && (
+          {allowEdit && editing && !started && (
             <>
               <circle
                 cx={center} cy={center} r={outerRadius}
@@ -166,7 +191,7 @@ const StatsMultiplayer = ({
                 transform={`rotate(-90 ${center} ${center})`}
               />
               <circle
-                cx={handleX} cy={handleY} r={6}
+                cx={String(handleX)} cy={String(handleY)} r={6}
                 fill="#fff" stroke="#D13B83" strokeWidth="2"
                 style={{ cursor: 'pointer' }}
                 onPointerDown={() => setDragging(true)}
@@ -178,10 +203,10 @@ const StatsMultiplayer = ({
 
       {/* CELDA 2: BOTÓN */}
       <div style={{ justifySelf: 'center' }}>
-        {!started && (
+        {allowEdit && !started && (
           <button
             onClick={() => setEditing((e) => !e)}
-            className="p-2 rounded-full shadow-md text-xl"
+            className="classic-button p-2 rounded-full shadow-md text-xl"
           >
             {editing ? (
               <span className="material-symbols-outlined text-[#fff]">
@@ -200,15 +225,21 @@ const StatsMultiplayer = ({
       <div className="w-[80px] h-[80px]">
         <svg width={size} height={size}>
           <defs>
-            <linearGradient id="counterGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <linearGradient id="counterGradientPlayer1" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="30%" stopColor="#19124D" />
               <stop offset="100%" stopColor="#3f356eff" />
             </linearGradient>
+
+            <linearGradient id="counterGradientPlayer2" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="30%" stopColor="#A63907" />
+              <stop offset="100%" stopColor="#D4812B" />
+            </linearGradient>
+
             <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="2" stdDeviation="2" floodColor="rgba(0,0,0,0.5)" />
             </filter>
           </defs>
-          <circle cx={center} cy={center} r={radius} fill="url(#counterGradient)" />
+          <circle cx={center} cy={center} r={radius} fill={counterGradient} />
           <circle
             cx={center} cy={center} r={radius}
             fill="none" stroke="#534C6FB0" strokeWidth={strokeWidth}

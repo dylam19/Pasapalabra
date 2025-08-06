@@ -9,51 +9,60 @@ import {
   serverTimestamp
 } from 'firebase/firestore';
 import { generarRoscoDesdeJSON } from '../utils/RoscoGenerator';
-
 const SALAS_COLLECTION = 'salas';
 
+// Marca la sala en pausa
 export const setPausaGlobal = async (roomId, enPausa) => {
   await actualizarSala(roomId, { pausa: enPausa });
 };
 
+
+// Crea sala con turnConfirmed inicializado en false
 export const crearSala = async (roomId) => {
   const salaRef = doc(db, SALAS_COLLECTION, roomId);
   const preguntas_p1 = generarRoscoDesdeJSON();
   const preguntas_p2 = generarRoscoDesdeJSON();
-
   const DEFAULT_TIME = 150;
+  
   await setDoc(salaRef, {
     turno: 'p1',
+    turnConfirmed: false,             // ← Nuevo campo
     preguntas_p1,
     preguntas_p2,
     puntajes: { p1: 0, p2: 0 },
     jugadores: { p1: true, p2: false },
     listo:    { p1: false, p2: false },
-    tiempos: { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
-    tiemposRestantes: { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
-    creada: serverTimestamp()
-});
+    tiempos:           { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+    tiemposRestantes:  { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+    creada: serverTimestamp(),
+    pausa: true,
+    turnStartedAt:null
+  });
 };
 
- export const reiniciarSala = async (roomId) => {
-   const salaRef = doc(db, SALAS_COLLECTION, roomId);
-   const preguntas_p1 = generarRoscoDesdeJSON();
-   const preguntas_p2 = generarRoscoDesdeJSON();
-   const DEFAULT_TIME = 150;
+// Reinicia sala y resetea también turnConfirmed
+export const reiniciarSala = async (roomId) => {
+  const salaRef = doc(db, SALAS_COLLECTION, roomId);
+  const preguntas_p1 = generarRoscoDesdeJSON();
+  const preguntas_p2 = generarRoscoDesdeJSON();
+  const DEFAULT_TIME = 150;
 
-   await updateDoc(salaRef, {
-     preguntas_p1,
-     preguntas_p2,
-     "puntajes.p1" : 0,
-     "puntajes.p2" : 0,
-     "listo.p1" : false,
-     "listo.p2" : false,
-     tiempos:           { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
-     tiemposRestantes:  { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
-     turno:             'p1',
-     estado:            'listo',   // ← arrancamos directo la partida
-   });
- };
+  await updateDoc(salaRef, {
+    preguntas_p1,
+    preguntas_p2,
+    "puntajes.p1": 0,
+    "puntajes.p2": 0,
+    "listo.p1": false,
+    "listo.p2": false,
+    tiempos:           { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+    tiemposRestantes:  { p1: DEFAULT_TIME, p2: DEFAULT_TIME },
+    turno:             'p1',
+    estado:            'listo',
+    turnConfirmed:     false,      // ← Reseteo
+    pausa: true,
+    turnStartedAt: null
+  });
+};
 
 export const setTiempoInicial = async (roomId, jugador, nuevoTiempo) => {
   const salaRef = doc(db, SALAS_COLLECTION, roomId);

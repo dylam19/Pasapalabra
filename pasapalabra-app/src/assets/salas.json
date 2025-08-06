@@ -1,0 +1,14 @@
+"salas": {
+  "{roomId}": {
+    "turno": "p1",
+    "turnConfirmed": false,
+    "turnEndAt": null,
+    "jugadores": { "p1": true, "p2": true },
+    "listo":   { "p1": false, "p2": false },
+    "tiempos":          { "p1": 150, "p2": 150 },
+    "tiemposRestantes": { "p1": 150, "p2": 150 },
+    "preguntas_p1": [ /* tu rosco */ ],
+    "preguntas_p2": [ /* tu rosco */ ],
+    "puntajes": { "p1": 0, "p2": 0 }
+  }
+}
